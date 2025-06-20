@@ -1,92 +1,101 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-md">
-      <!-- Logo and Title -->
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-purple animate-float">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-white to-blue-50">
+    <div class="max-w-md w-full space-y-8">
+      <!-- Header -->
+      <div class="text-center">
+        <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-8">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
           </svg>
         </div>
-        <h1 class="text-3xl font-bold gradient-text font-display">Forgot Password</h1>
-        <p class="text-secondary-600 mt-2">Enter your email to reset your password</p>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Forgot Password?</h2>
+        <p class="text-gray-600">No worries, we'll send you reset instructions</p>
       </div>
 
-      <!-- Forgot Password Form -->
-      <div class="card animate-bounce-in">
-        <form @submit.prevent="sendResetLink" class="space-y-6">
-          <!-- Email -->
+      <!-- Success Message -->
+      <div v-if="emailSent" class="bg-white rounded-2xl shadow-lg p-8">
+        <div class="text-center">
+          <div class="mx-auto w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M12 12v7"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-4">Check Your Email!</h3>
+          <p class="text-gray-600 mb-6 leading-relaxed">
+            We've sent a password reset link to <span class="font-medium">{{ form.email }}</span>.
+            Click the link in the email to reset your password.
+          </p>
+          <p class="text-sm text-gray-500 mb-6">
+            Didn't receive the email? Check your spam folder or
+            <button @click="resendEmail" class="text-blue-600 font-medium">
+              resend the email
+            </button>
+          </p>
+          <router-link
+            to="/login"
+            class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Login
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Reset Form -->
+      <div v-else class="bg-white rounded-2xl shadow-lg p-8">
+        <form @submit.prevent="handleForgotPassword" class="space-y-6">
+          <!-- Email Field -->
           <div>
-            <label for="email" class="block text-sm font-medium text-secondary-700 mb-2">
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
               Email Address
             </label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-                </svg>
-              </div>
               <input
                 id="email"
                 v-model="form.email"
                 type="email"
                 required
-                class="w-full pl-10 pr-4 py-3 border border-secondary-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
-                :class="{ 'border-error-300 focus:ring-error-500': errors.email }"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                :class="{ 'border-red-500 focus:ring-red-500': errors.email }"
                 placeholder="Enter your email address"
               />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                </svg>
+              </div>
             </div>
-            <p v-if="errors.email" class="mt-1 text-sm text-error-600">{{ errors.email[0] }}</p>
+            <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email[0] }}</p>
           </div>
 
           <!-- Submit Button -->
           <button
             type="submit"
             :disabled="loading"
-            class="w-full btn-primary"
+            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-medium disabled:opacity-50 transition-opacity"
           >
             <span v-if="loading" class="flex items-center justify-center">
               <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Sending Reset Link...
+              Sending reset link...
             </span>
             <span v-else>Send Reset Link</span>
           </button>
-        </form>
 
-        <!-- Success Message -->
-        <div v-if="success" class="mt-6 p-4 bg-success-50 border border-success-200 rounded-xl">
-          <div class="flex items-center">
-            <svg class="w-5 h-5 text-success-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <p class="text-sm text-success-700">
-              Password reset link has been sent to your email address.
+          <!-- Back to Login -->
+          <div class="text-center">
+            <p class="text-sm text-gray-600">
+              Remember your password?
+              <router-link to="/login" class="text-blue-600 font-medium ml-1">
+                Back to login
+              </router-link>
             </p>
           </div>
-        </div>
-
-        <!-- Back to Login -->
-        <div class="mt-6 text-center">
-          <router-link 
-            to="/login" 
-            class="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors duration-200"
-          >
-            ← Back to Login
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="text-center mt-8">
-        <p class="text-sm text-secondary-500">
-          Remember your password? 
-          <router-link to="/login" class="text-primary-600 hover:text-primary-700 font-medium">
-            Sign in here
-          </router-link>
-        </p>
+        </form>
       </div>
     </div>
   </div>
@@ -94,113 +103,43 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { useNotificationStore } from '../../stores/notifications';
+import axios from 'axios';
 
+const router = useRouter();
 const notificationStore = useNotificationStore();
 
 const loading = ref(false);
-const success = ref(false);
+const emailSent = ref(false);
 const errors = ref({});
 
 const form = reactive({
   email: ''
 });
 
-const sendResetLink = async () => {
+const handleForgotPassword = async () => {
   loading.value = true;
   errors.value = {};
-  success.value = false;
 
   try {
-    // Simulate API call - replace with actual implementation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    success.value = true;
-    notificationStore.success('Success', 'Password reset link sent to your email');
+    await axios.post('/api/auth/forgot-password', {
+      email: form.email
+    });
+
+    emailSent.value = true;
+    notificationStore.success('Reset Link Sent!', 'Check your email for the password reset instructions.');
   } catch (error) {
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {};
     }
-    notificationStore.error('Error', error.response?.data?.message || 'Failed to send reset link');
+    notificationStore.error('Reset Failed', error.response?.data?.message || 'An error occurred while sending the reset link.');
   } finally {
     loading.value = false;
   }
 };
+
+const resendEmail = async () => {
+  await handleForgotPassword();
+};
 </script>
-
-<style scoped>
-.gradient-text {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
-  color: white;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-primary:hover:not(:disabled) {
-  box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
-  transform: scale(1.05);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 2rem;
-  transition: all 0.3s ease;
-}
-
-.animate-bounce-in {
-  animation: bounceIn 0.6s ease-out;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes bounceIn {
-  0% {
-    transform: scale(0.3);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-</style>
