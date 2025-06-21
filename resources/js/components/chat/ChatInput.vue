@@ -1,5 +1,22 @@
 <template>
-  <div class="bg-white border-t border-gray-200 px-4 py-3">
+  <div class="bg-white border-t border-gray-200 px-4 py-3 relative">
+    <!-- Editing Mode Indicator -->
+    <div v-if="props.editingMessage" class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          <span class="text-sm text-blue-700 font-medium">Editing message</span>
+        </div>
+        <button @click="cancelEdit" class="text-blue-600 hover:text-blue-800">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <div class="flex items-end space-x-3 max-w-4xl mx-auto">
       <!-- File Upload Button -->
       <button
@@ -94,6 +111,9 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
+        <svg v-else-if="props.editingMessage" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
         <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
         </svg>
@@ -111,7 +131,7 @@
     />
 
     <!-- Emoji Picker -->
-    <div v-if="showEmojiPicker" class="absolute bottom-full right-4 mb-2 p-3 bg-white rounded-xl shadow-xl border border-gray-100 backdrop-blur-sm">
+    <div v-if="showEmojiPicker" :class="emojiPickerClasses">
       <div class="grid grid-cols-8 gap-1">
         <button
           v-for="emoji in commonEmojis"
@@ -127,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue';
+import { ref, computed, nextTick, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   disabled: {
@@ -137,10 +157,14 @@ const props = defineProps({
   replyToMessage: {
     type: Object,
     default: null
+  },
+  editingMessage: {
+    type: Object,
+    default: null
   }
 });
 
-const emit = defineEmits(['send-message', 'typing', 'clear-reply']);
+const emit = defineEmits(['send-message', 'typing', 'clear-reply', 'edit-message', 'cancel-edit']);
 
 const messageInput = ref(null);
 const fileInput = ref(null);
@@ -159,7 +183,26 @@ const canSend = computed(() => {
   return (message.value.trim() || selectedFiles.value.length > 0) && !props.disabled;
 });
 
+// Dynamic emoji picker position - use absolute positioning relative to chat input
+const emojiPickerClasses = computed(() => {
+  return 'emoji-picker absolute bottom-full right-0 mb-2 z-50 p-3 bg-white rounded-xl shadow-xl border border-gray-100 backdrop-blur-sm';
+});
+
+// Watch for editing message changes
+watch(() => props.editingMessage, (newEditingMessage) => {
+  if (newEditingMessage) {
+    message.value = newEditingMessage.content;
+    nextTick(() => {
+      messageInput.value?.focus();
+    });
+  }
+});
+
 // Methods
+const cancelEdit = () => {
+  message.value = '';
+  emit('cancel-edit');
+};
 const handleKeydown = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault();
@@ -211,38 +254,44 @@ const sendMessage = async () => {
   if (!canSend.value || sending.value) return;
 
   const messageContent = message.value.trim();
-  const files = [...selectedFiles.value];
 
-  if (!messageContent && files.length === 0) return;
+  if (!messageContent) return;
 
   sending.value = true;
   error.value = '';
 
   try {
-    const messageData = {
-      content: messageContent,
-      type: files.length > 0 ? 'file' : 'text',
-      reply_to_message_id: props.replyToMessage?.id || null
-    };
+    if (props.editingMessage) {
+      // Edit mode
+      emit('edit-message', messageContent);
+    } else {
+      // Send mode
+      const files = [...selectedFiles.value];
+      const messageData = {
+        content: messageContent,
+        type: files.length > 0 ? 'file' : 'text',
+        reply_to_message_id: props.replyToMessage?.id || null
+      };
 
-    // If there are files, we need to send as FormData
-    if (files.length > 0) {
-      const formData = new FormData();
-      formData.append('content', messageContent);
-      formData.append('type', 'file');
+      // If there are files, we need to send as FormData
+      if (files.length > 0) {
+        const formData = new FormData();
+        formData.append('content', messageContent);
+        formData.append('type', 'file');
 
-      if (props.replyToMessage?.id) {
-        formData.append('reply_to_message_id', props.replyToMessage.id);
+        if (props.replyToMessage?.id) {
+          formData.append('reply_to_message_id', props.replyToMessage.id);
+        }
+
+        files.forEach((file, index) => {
+          formData.append(`attachments[${index}]`, file);
+        });
+
+        messageData.formData = formData;
       }
 
-      files.forEach((file, index) => {
-        formData.append(`attachments[${index}]`, file);
-      });
-
-      messageData.formData = formData;
+      emit('send-message', messageData);
     }
-
-    emit('send-message', messageData);
 
     // Clear input
     message.value = '';
@@ -328,6 +377,22 @@ const insertEmoji = (emoji) => {
 const clearReply = () => {
   emit('clear-reply');
 };
+
+// Click outside handler for emoji picker
+const handleClickOutside = (event) => {
+  if (showEmojiPicker.value && !event.target.closest('.emoji-picker') && !event.target.closest('[title="Add emoji"]')) {
+    showEmojiPicker.value = false;
+  }
+};
+
+// Setup click outside listener
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // Watch for reply changes to focus input
 watch(() => props.replyToMessage, (newReply) => {

@@ -7,6 +7,8 @@ use App\Models\Message;
 use App\Models\ChatRoom;
 use App\Models\UserActivityLog;
 use App\Events\MessageSent;
+use App\Events\MessageUpdated;
+use App\Events\MessageDeleted;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -30,6 +32,7 @@ class MessageController extends Controller
         }
 
         $query = $chatRoom->messages()
+                         ->withTrashed()
                          ->with(['user', 'replyToMessage.user'])
                          ->withCount('readByUsers');
 
@@ -216,9 +219,21 @@ class MessageController extends Controller
             'message_id' => $message->id,
         ]);
 
+        // Refresh message with relationships
+        $message = $message->fresh(['user', 'replyToMessage.user']);
+
+        // Broadcast the updated message
+        \Log::info('Broadcasting MessageUpdated event', [
+            'message_id' => $message->id,
+            'chat_room_id' => $message->chat_room_id,
+            'content' => $message->content
+        ]);
+        broadcast(new MessageUpdated($message));
+        \Log::info('MessageUpdated event broadcasted successfully');
+
         return response()->json([
             'message' => 'Message updated successfully',
-            'data' => $message->fresh(['user', 'replyToMessage.user'])
+            'data' => $message
         ]);
     }
 
@@ -242,6 +257,9 @@ class MessageController extends Controller
             ], 403);
         }
 
+        // Load relationships before soft delete
+        $message->load(['user', 'replyToMessage.user']);
+
         $message->delete();
 
         // Log activity
@@ -255,6 +273,14 @@ class MessageController extends Controller
             'message_id' => $message->id,
             'original_sender_id' => $message->user_id,
         ]);
+
+        // Broadcast the deleted message
+        \Log::info('Broadcasting MessageDeleted event', [
+            'message_id' => $message->id,
+            'chat_room_id' => $message->chat_room_id,
+        ]);
+        broadcast(new MessageDeleted($message));
+        \Log::info('MessageDeleted event broadcasted successfully');
 
         return response()->json([
             'message' => 'Message deleted successfully'

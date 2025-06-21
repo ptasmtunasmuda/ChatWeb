@@ -30,6 +30,8 @@ class Message extends Model implements HasMedia
         ];
     }
 
+    protected $appends = ['is_deleted'];
+
     /**
      * Relationships
      */
@@ -109,5 +111,13 @@ class Message extends Model implements HasMedia
     public function getAttachments()
     {
         return $this->getMedia();
+    }
+
+    /**
+     * Accessor for is_deleted attribute
+     */
+    public function getIsDeletedAttribute(): bool
+    {
+        return !is_null($this->deleted_at);
     }
 }

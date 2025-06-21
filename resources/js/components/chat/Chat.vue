@@ -38,13 +38,28 @@
                   </svg>
                   Profile
                 </router-link>
+
+                <!-- Admin Menu (Only for Admin) -->
+                <router-link
+                  v-if="authStore.isAdmin"
+                  to="/admin"
+                  class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  @click="dropdownOpen = false"
+                >
+                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                  Admin
+                </router-link>
+
                 <button class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                   <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Help & feedback
                 </button>
-                <button class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="logout">
+                <button class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="handleLogout">
                   <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
@@ -244,7 +259,7 @@
       </div>
 
       <!-- Chat Interface -->
-      <div v-else class="flex-1 flex flex-col h-full">
+      <div v-else class="flex-1 flex flex-col h-full relative">
         <!-- Chat Header -->
         <div class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
           <div class="flex items-center justify-between">
@@ -291,6 +306,8 @@
               </button>
             </div>
           </div>
+
+
         </div>
 
         <!-- Messages Area - Scrollable -->
@@ -303,6 +320,7 @@
             @edit-message="handleEditMessage"
             @delete-message="handleDeleteMessage"
             @load-more="loadMoreMessages"
+            @start-edit="handleStartEdit"
           />
         </div>
 
@@ -311,7 +329,10 @@
           <ChatInput
             @send-message="handleSendMessage"
             @typing="handleTyping"
+            @edit-message="handleSaveEdit"
+            @cancel-edit="handleCancelEdit"
             :disabled="!currentChatRoom"
+            :editing-message="editingMessage"
           />
         </div>
       </div>
@@ -516,7 +537,32 @@ const handleDeleteMessage = async (messageId) => {
   if (!currentChatRoom.value) return;
 
   const result = await chatStore.deleteMessage(currentChatRoom.value.id, messageId);
-  if (!result.success) {
+  if (result.success) {
+    notificationStore.success('Message Deleted', 'Your message has been deleted successfully.');
+  } else {
+    notificationStore.error('Error', result.message);
+  }
+};
+
+// Edit message state
+const editingMessage = ref(null);
+
+const handleStartEdit = (message) => {
+  editingMessage.value = message;
+};
+
+const handleCancelEdit = () => {
+  editingMessage.value = null;
+};
+
+const handleSaveEdit = async (content) => {
+  if (!editingMessage.value) return;
+
+  const result = await chatStore.editMessage(currentChatRoom.value.id, editingMessage.value.id, content);
+  if (result.success) {
+    editingMessage.value = null;
+    notificationStore.success('Message Updated', 'Your message has been updated successfully.');
+  } else {
     notificationStore.error('Error', result.message);
   }
 };
@@ -568,15 +614,7 @@ const handleSearch = async () => {
   // For chats, the computed property handles the filtering
 };
 
-const logout = async () => {
-  try {
-    await authStore.logout();
-    dropdownOpen.value = false;
-    router.push('/login');
-  } catch (error) {
-    notificationStore.error('Logout Failed', 'Failed to logout. Please try again.');
-  }
-};
+
 
 // Initialize chat
 const initializeChat = async () => {
@@ -685,22 +723,49 @@ const setupRoomListeners = () => {
 
     console.log('📡 Private channel created:', channel);
 
-    // Listen for MessageSent events via global listener (most reliable)
+    // Listen for all events via global listener (most reliable)
     if (channel.subscription) {
       channel.subscription.bind_global((eventName, data) => {
         console.log('🌍 Global event received on private channel:', eventName, data);
+        console.log('🔍 Event details:', {
+          eventName,
+          hasMessage: !!data.message,
+          messageId: data.message?.id,
+          chatRoomId: data.message?.chat_room_id,
+          currentRoomId: currentChatRoom.value?.id
+        });
 
         if (eventName === 'MessageSent' && data.message) {
           console.log('🎯 MessageSent received via global listener!');
           chatStore.addMessage(data.message);
+        } else if (eventName === 'message.updated' && data.message) {
+          console.log('🎯 message.updated received via global listener!', data.message);
+          console.log('🎯 Calling chatStore.updateMessage...');
+          chatStore.updateMessage(data.message);
+        } else if (eventName === 'message.deleted' && data.message) {
+          console.log('🎯 message.deleted received via global listener!', data.message);
+          console.log('🎯 Calling chatStore.markMessageAsDeleted...');
+          chatStore.markMessageAsDeleted(data.message);
+        } else {
+          console.log('🤷 Unknown or unhandled event:', eventName, 'Data:', data);
         }
       });
     }
 
-    // Backup: Standard MessageSent listener
+    // Backup: Standard listeners
     channel.listen('MessageSent', (e) => {
       console.log('🎉 MessageSent event received via standard listener:', e);
       // Don't add message here to avoid duplicates - global listener handles it
+    });
+
+    channel.listen('.message.updated', (e) => {
+      console.log('🔄 message.updated event received via standard listener:', e);
+      // Don't update message here to avoid duplicates - global listener handles it
+    });
+
+    channel.listen('.message.deleted', (e) => {
+      console.log('🗑️ message.deleted event received via standard listener:', e);
+      // Don't delete message here to avoid duplicates - global listener handles it
     });
 
     // Listen for all events for debugging
@@ -791,6 +856,17 @@ watch(currentChatRoom, (newRoom, oldRoom) => {
     setupRoomListeners();
   }
 });
+
+// Handle logout
+const handleLogout = async () => {
+  try {
+    await authStore.logout();
+    dropdownOpen.value = false;
+    router.push('/login');
+  } catch (error) {
+    notificationStore.error('Logout Failed', 'Failed to logout. Please try again.');
+  }
+};
 
 onMounted(async () => {
   await initializeChat();

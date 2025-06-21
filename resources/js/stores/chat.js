@@ -147,7 +147,13 @@ export const useChatStore = defineStore('chat', () => {
 
             const messageIndex = messages.value.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
-                messages.value.splice(messageIndex, 1);
+                // Mark message as deleted instead of removing it
+                messages.value[messageIndex] = {
+                    ...messages.value[messageIndex],
+                    is_deleted: true,
+                    content: null,
+                    deleted_at: new Date().toISOString()
+                };
             }
 
             return { success: true };
@@ -251,6 +257,42 @@ export const useChatStore = defineStore('chat', () => {
         }
     };
 
+    const updateMessage = (updatedMessage) => {
+        console.log('🔄 Chat Store: Updating real-time message');
+        console.log('📝 Updated Message:', updatedMessage);
+        console.log('📝 Current messages count:', messages.value.length);
+        console.log('📝 Looking for message ID:', updatedMessage.id);
+
+        const messageIndex = messages.value.findIndex(m => m.id === updatedMessage.id);
+        console.log('📝 Message index found:', messageIndex);
+
+        if (messageIndex !== -1) {
+            console.log('📝 Old message:', messages.value[messageIndex]);
+            messages.value[messageIndex] = updatedMessage;
+            console.log('📝 New message:', messages.value[messageIndex]);
+            console.log('✅ Chat Store: Message updated via real-time');
+        } else {
+            console.log('❌ Chat Store: Message not found for update');
+        }
+    };
+
+    const markMessageAsDeleted = (deletedMessage) => {
+        console.log('🗑️ Chat Store: Marking message as deleted via real-time');
+        console.log('🗑️ Deleted Message:', deletedMessage);
+
+        const messageIndex = messages.value.findIndex(m => m.id === deletedMessage.id);
+        if (messageIndex !== -1) {
+            // Mark message as deleted instead of removing it
+            messages.value[messageIndex] = {
+                ...messages.value[messageIndex],
+                is_deleted: true,
+                content: null,
+                deleted_at: deletedMessage.deleted_at || new Date().toISOString()
+            };
+            console.log('✅ Chat Store: Message marked as deleted via real-time');
+        }
+    };
+
     const updateTypingUsers = (user, isTyping) => {
         if (isTyping) {
             if (!typingUsers.value.find(u => u.id === user.id)) {
@@ -346,6 +388,8 @@ export const useChatStore = defineStore('chat', () => {
 
         // Real-time handlers
         addMessage,
+        updateMessage,
+        markMessageAsDeleted,
         updateTypingUsers,
         addOnlineUser,
         removeOnlineUser,

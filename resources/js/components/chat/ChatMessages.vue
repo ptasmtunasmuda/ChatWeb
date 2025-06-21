@@ -58,40 +58,38 @@
           <div
             class="message-bubble"
             :class="{
-              'sent': currentUser && message.user.id === currentUser.id,
-              'received': !currentUser || message.user.id !== currentUser.id
+              'sent': currentUser && message.user.id === currentUser.id && !message.is_deleted,
+              'received': (!currentUser || message.user.id !== currentUser.id) && !message.is_deleted,
+              'deleted': message.is_deleted
             }"
           >
-            <!-- Message content -->
-            <div v-if="editingMessageId === message.id" class="space-y-2">
-              <textarea
-                v-model="editContent"
-                class="w-full p-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows="2"
-                @keydown.enter.prevent="saveEdit"
-                @keydown.esc="cancelEdit"
-              ></textarea>
-              <div class="flex justify-end space-x-2">
-                <button @click="cancelEdit" class="text-xs text-gray-500 hover:text-gray-700">Cancel</button>
-                <button @click="saveEdit" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Save</button>
-              </div>
+            <!-- Deleted message -->
+            <div v-if="message.is_deleted" class="flex items-center space-x-2">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              <span class="text-sm italic">This message was deleted</span>
             </div>
 
+            <!-- Regular message content -->
             <div v-else>
-              <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+              <!-- Regular message display -->
+              <div>
+                <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
 
-              <!-- File attachments -->
-              <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 space-y-2">
-                <div
-                  v-for="attachment in message.attachments"
-                  :key="attachment.id"
-                  class="flex items-center space-x-2 p-2 bg-white/50 rounded-lg"
-                >
-                  <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                  </svg>
-                  <span class="text-sm text-gray-700">{{ attachment.name }}</span>
-                  <button class="text-xs text-blue-600 hover:text-blue-700">Download</button>
+                <!-- File attachments -->
+                <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 space-y-2">
+                  <div
+                    v-for="attachment in message.attachments"
+                    :key="attachment.id"
+                    class="flex items-center space-x-2 p-2 bg-white/50 rounded-lg"
+                  >
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
+                    <span class="text-sm text-gray-700">{{ attachment.name }}</span>
+                    <button class="text-xs text-blue-600 hover:text-blue-700">Download</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -101,11 +99,11 @@
           <div class="flex items-center mt-1 space-x-2">
             <div class="flex items-center space-x-1">
               <span class="text-xs text-gray-500">{{ formatTime(message.created_at) }}</span>
-              <span v-if="message.is_edited" class="text-xs text-gray-400">(edited)</span>
+              <span v-if="message.is_edited && !message.is_deleted" class="text-xs text-gray-400">(edited)</span>
             </div>
 
-            <!-- Message actions -->
-            <div v-if="currentUser && message.user.id === currentUser.id" class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <!-- Message actions (only for non-deleted messages) -->
+            <div v-if="currentUser && message.user.id === currentUser.id && !message.is_deleted" class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 @click="startEdit(message)"
                 class="p-1 text-gray-400 hover:text-gray-600 rounded"
@@ -126,9 +124,9 @@
               </button>
             </div>
 
-            <!-- Reaction button for other users' messages -->
+            <!-- Reaction button for other users' messages (only for non-deleted messages) -->
             <button
-              v-if="currentUser && message.user.id !== currentUser.id"
+              v-if="currentUser && message.user.id !== currentUser.id && !message.is_deleted"
               class="p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,11 +154,39 @@
         </p>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal - Simple -->
+    <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl border w-full max-w-sm mx-4 p-4">
+        <h3 class="text-lg font-medium text-gray-900 mb-3">Delete Message?</h3>
+
+        <p class="text-gray-600 text-sm mb-4">
+          This message will be deleted for everyone.
+        </p>
+
+        <div class="flex justify-end space-x-2">
+          <button
+            @click="cancelDelete"
+            class="px-3 py-2 text-sm text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
+          <button
+            @click="confirmDelete"
+            class="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue';
+import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   messages: {
@@ -181,11 +207,11 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['edit-message', 'delete-message', 'load-more']);
+const emit = defineEmits(['edit-message', 'delete-message', 'load-more', 'start-edit']);
 
 const messagesContainer = ref(null);
-const editingMessageId = ref(null);
-const editContent = ref('');
+const showDeleteConfirm = ref(false);
+const messageToDelete = ref(null);
 
 // Methods
 const formatTime = (timestamp) => {
@@ -213,25 +239,40 @@ const scrollToBottom = () => {
 };
 
 const startEdit = (message) => {
-  editingMessageId.value = message.id;
-  editContent.value = message.content;
-};
-
-const cancelEdit = () => {
-  editingMessageId.value = null;
-  editContent.value = '';
-};
-
-const saveEdit = () => {
-  if (editContent.value.trim()) {
-    emit('edit-message', editingMessageId.value, editContent.value.trim());
-    cancelEdit();
-  }
+  // Emit to parent to handle edit in chat input
+  emit('start-edit', message);
 };
 
 const deleteMessage = (messageId) => {
-  if (confirm('Are you sure you want to delete this message?')) {
-    emit('delete-message', messageId);
+  messageToDelete.value = messageId;
+  showDeleteConfirm.value = true;
+
+  // Add keyboard event listener when modal opens
+  nextTick(() => {
+    document.addEventListener('keydown', handleKeydown);
+  });
+};
+
+const confirmDelete = () => {
+  if (messageToDelete.value) {
+    emit('delete-message', messageToDelete.value);
+  }
+  cancelDelete();
+};
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false;
+  messageToDelete.value = null;
+
+  // Remove keyboard event listener when modal closes
+  document.removeEventListener('keydown', handleKeydown);
+};
+
+const handleKeydown = (event) => {
+  if (event.key === 'Escape') {
+    cancelDelete();
+  } else if (event.key === 'Enter') {
+    confirmDelete();
   }
 };
 
@@ -242,6 +283,11 @@ watch(() => props.messages.length, () => {
 
 onMounted(() => {
   scrollToBottom();
+});
+
+onUnmounted(() => {
+  // Cleanup keyboard event listener if modal is open
+  document.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -265,6 +311,14 @@ onMounted(() => {
   border: 1px solid #e5e7eb;
   color: #374151;
   border-bottom-left-radius: 0.25rem;
+}
+
+.message-bubble.deleted {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  border-radius: 1rem;
+  opacity: 0.7;
 }
 
 .typing-indicator {
@@ -310,4 +364,6 @@ onMounted(() => {
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+
 </style>
