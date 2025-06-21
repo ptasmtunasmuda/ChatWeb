@@ -34,7 +34,15 @@ export const useChatStore = defineStore('chat', () => {
         loading.value = true;
         try {
             const response = await axios.get('/api/chat-rooms');
-            chatRooms.value = response.data.data || [];
+            const rooms = response.data.data || [];
+
+            // Ensure each room has participants data
+            chatRooms.value = rooms.map(room => ({
+                ...room,
+                participants: room.active_participants || room.activeParticipants || []
+            }));
+
+            console.log('Chat rooms loaded:', chatRooms.value); // Debug log
             return { success: true };
         } catch (error) {
             console.error('Error fetching chat rooms:', error);
@@ -49,8 +57,14 @@ export const useChatStore = defineStore('chat', () => {
         try {
             const response = await axios.get(`/api/chat-rooms/${id}`);
             console.log('Chat room response:', response.data); // Debug log
-            currentChatRoom.value = response.data;
-            participants.value = response.data.active_participants || response.data.activeParticipants || [];
+
+            const roomData = response.data;
+            currentChatRoom.value = {
+                ...roomData,
+                participants: roomData.active_participants || roomData.activeParticipants || []
+            };
+
+            participants.value = currentChatRoom.value.participants;
             console.log('Participants:', participants.value); // Debug log
             return { success: true };
         } catch (error) {

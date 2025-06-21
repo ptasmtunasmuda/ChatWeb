@@ -161,7 +161,7 @@
             >
               <div class="relative">
                 <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {{ room.name.charAt(0).toUpperCase() }}
+                  {{ getChatAvatarInitial(room) }}
                 </div>
                 <div
                   v-if="room.unread_count > 0"
@@ -171,7 +171,7 @@
                 </div>
               </div>
               <div class="ml-3 flex-1 text-left">
-                <p class="font-semibold text-gray-900">{{ room.name }}</p>
+                <p class="font-semibold text-gray-900">{{ getChatDisplayName(room) }}</p>
                 <p class="text-sm text-gray-500 truncate">{{ room.latest_message?.content || 'No messages yet' }}</p>
               </div>
               <div class="text-xs text-gray-500">{{ formatTime(room.updated_at) }}</div>
@@ -253,7 +253,7 @@
               </button>
               <div class="relative">
                 <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {{ selectedChatRoom?.name?.charAt(0).toUpperCase() }}
+                  {{ getChatAvatarInitial(selectedChatRoom) }}
                 </div>
                 <div
                   v-if="selectedChatRoom?.active"
@@ -261,7 +261,7 @@
                 ></div>
               </div>
               <div class="ml-3">
-                <p class="font-semibold text-gray-900">{{ selectedChatRoom?.name }}</p>
+                <p class="font-semibold text-gray-900">{{ getChatDisplayName(selectedChatRoom) }}</p>
                 <p class="text-sm text-gray-500">
                   {{ selectedChatRoom?.active ? 'Active now' : `Last seen at ${selectedChatRoom?.time}` }}
                 </p>
@@ -355,14 +355,35 @@ const sortedMessages = computed(() => chatStore.sortedMessages);
 const currentChatParticipants = computed(() => chatStore.currentChatParticipants);
 const typingUsers = computed(() => chatStore.typingUsers);
 
+// Helper function to get display name for chat room
+const getChatDisplayName = (room) => {
+  if (!room) return '';
+
+  // For private chats, show the other participant's name
+  if (room.type === 'private' && room.participants) {
+    const otherParticipant = room.participants.find(p => p.id !== authStore.user?.id);
+    return otherParticipant ? otherParticipant.name : room.name;
+  }
+
+  // For group chats, use the room name
+  return room.name;
+};
+
+// Helper function to get avatar initial for chat room
+const getChatAvatarInitial = (room) => {
+  const displayName = getChatDisplayName(room);
+  return displayName.charAt(0).toUpperCase();
+};
+
 const filteredChatRooms = computed(() => {
   if (!searchQuery.value || currentView.value !== 'chats') {
     return chatStore.sortedChatRooms;
   }
 
-  return chatStore.sortedChatRooms.filter(room =>
-    room.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  return chatStore.sortedChatRooms.filter(room => {
+    const displayName = getChatDisplayName(room);
+    return displayName.toLowerCase().includes(searchQuery.value.toLowerCase());
+  });
 });
 
 // Methods
