@@ -716,21 +716,43 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Stop heartbeat
-  usersStore.stopHeartbeat();
+  console.log('🧹 Chat component unmounting, cleaning up...');
 
-  // Leave channels
-  if (currentChatRoom.value && window.Echo) {
-    window.Echo.leave(`chat-room.${currentChatRoom.value.id}`);
+  try {
+    // Stop heartbeat
+    if (usersStore && usersStore.stopHeartbeat) {
+      usersStore.stopHeartbeat();
+      console.log('✅ Heartbeat stopped');
+    }
+
+    // Leave channels
+    if (currentChatRoom.value && window.Echo) {
+      console.log('🧹 Leaving chat room channel:', currentChatRoom.value.id);
+      window.Echo.leave(`chat-room.${currentChatRoom.value.id}`);
+    }
+
+    if (window.Echo) {
+      console.log('🧹 Leaving global channels...');
+      window.Echo.leave('users-status');
+      window.Echo.leave('chat-rooms');
+      window.Echo.leave('user-messages');
+    }
+
+    // Clear chat store
+    if (chatStore && chatStore.clearCurrentChat) {
+      chatStore.clearCurrentChat();
+      console.log('✅ Chat store cleared');
+    }
+
+    // Reset global flags
+    if (window.globalListenersSetup) {
+      window.globalListenersSetup = false;
+    }
+
+    console.log('✅ Chat component cleanup complete');
+  } catch (error) {
+    console.warn('⚠️ Error during chat component cleanup:', error);
   }
-
-  if (window.Echo) {
-    window.Echo.leave('users-status');
-    window.Echo.leave('chat-rooms');
-    window.Echo.leave('user-messages');
-  }
-
-  chatStore.clearCurrentChat();
 });
 </script>
 

@@ -71,24 +71,44 @@ export const useAuthStore = defineStore('auth', () => {
 
     const logout = async () => {
         try {
+            console.log('🔐 Auth Store: Starting logout process...');
+
             // Broadcast offline status before logout
             if (window.Echo && user.value) {
-                await axios.post('/api/user/update-last-seen');
+                try {
+                    await axios.post('/api/user/update-last-seen');
+                    console.log('✅ Last seen updated');
+                } catch (lastSeenError) {
+                    console.warn('⚠️ Error updating last seen:', lastSeenError);
+                }
             }
 
             await axios.post('/api/auth/logout');
+            console.log('✅ Logout API call successful');
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('❌ Logout error:', error);
         } finally {
+            // Clear user data first
             user.value = null;
             token.value = null;
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
+            console.log('✅ Auth data cleared');
 
-            // Disconnect Echo
+            // Disconnect Echo with error handling
             if (window.Echo) {
-                window.Echo.disconnect();
+                try {
+                    console.log('🔌 Disconnecting Echo...');
+                    window.Echo.disconnect();
+                    window.Echo = null;
+                    window.echoInitialized = false;
+                    console.log('✅ Echo disconnected successfully');
+                } catch (echoError) {
+                    console.warn('⚠️ Error disconnecting Echo:', echoError);
+                }
             }
+
+            console.log('✅ Logout process complete');
         }
     };
 

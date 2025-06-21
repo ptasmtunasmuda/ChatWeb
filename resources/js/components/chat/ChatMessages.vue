@@ -32,12 +32,12 @@
           Today, {{ formatTime(messages[0]?.created_at) }}
         </div>
       </div>
-      
-      <div 
-        v-for="message in messages" 
+
+      <div
+        v-for="message in messages"
         :key="message.id"
         class="flex items-end space-x-2 group"
-        :class="{ 'flex-row-reverse space-x-reverse': message.user.id === currentUser.id }"
+        :class="{ 'flex-row-reverse space-x-reverse': currentUser && message.user.id === currentUser.id }"
       >
         <!-- Avatar -->
         <div class="flex-shrink-0">
@@ -55,11 +55,11 @@
           </div>
 
           <!-- Message bubble -->
-          <div 
+          <div
             class="message-bubble"
             :class="{
-              'sent': message.user.id === currentUser.id,
-              'received': message.user.id !== currentUser.id
+              'sent': currentUser && message.user.id === currentUser.id,
+              'received': !currentUser || message.user.id !== currentUser.id
             }"
           >
             <!-- Message content -->
@@ -76,14 +76,14 @@
                 <button @click="saveEdit" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Save</button>
               </div>
             </div>
-            
+
             <div v-else>
               <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
-              
+
               <!-- File attachments -->
               <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 space-y-2">
-                <div 
-                  v-for="attachment in message.attachments" 
+                <div
+                  v-for="attachment in message.attachments"
                   :key="attachment.id"
                   class="flex items-center space-x-2 p-2 bg-white/50 rounded-lg"
                 >
@@ -96,17 +96,17 @@
               </div>
             </div>
           </div>
-          
+
           <!-- Message footer -->
           <div class="flex items-center mt-1 space-x-2">
             <div class="flex items-center space-x-1">
               <span class="text-xs text-gray-500">{{ formatTime(message.created_at) }}</span>
               <span v-if="message.is_edited" class="text-xs text-gray-400">(edited)</span>
             </div>
-            
+
             <!-- Message actions -->
-            <div v-if="message.user.id === currentUser.id" class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <button 
+            <div v-if="currentUser && message.user.id === currentUser.id" class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
                 @click="startEdit(message)"
                 class="p-1 text-gray-400 hover:text-gray-600 rounded"
                 title="Edit message"
@@ -115,7 +115,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
               </button>
-              <button 
+              <button
                 @click="deleteMessage(message.id)"
                 class="p-1 text-red-400 hover:text-red-600 rounded"
                 title="Delete message"
@@ -125,10 +125,10 @@
                 </svg>
               </button>
             </div>
-            
+
             <!-- Reaction button for other users' messages -->
-            <button 
-              v-if="message.user.id !== currentUser.id" 
+            <button
+              v-if="currentUser && message.user.id !== currentUser.id"
               class="p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +151,7 @@
       </div>
       <div class="bg-white rounded-lg px-4 py-2 border border-gray-200">
         <p class="text-sm text-gray-600">
-          {{ typingUsers.map(u => u.name).join(', ') }} 
+          {{ typingUsers.map(u => u.name).join(', ') }}
           {{ typingUsers.length === 1 ? 'is' : 'are' }} typing...
         </p>
       </div>
@@ -169,7 +169,7 @@ const props = defineProps({
   },
   currentUser: {
     type: Object,
-    required: true
+    default: null
   },
   loading: {
     type: Boolean,
@@ -192,7 +192,7 @@ const formatTime = (timestamp) => {
   const date = new Date(timestamp);
   const now = new Date();
   const diffInMinutes = (now - date) / (1000 * 60);
-  
+
   if (diffInMinutes < 1) {
     return 'Just now';
   } else if (diffInMinutes < 60) {
