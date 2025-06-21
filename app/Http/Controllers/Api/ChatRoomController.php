@@ -51,7 +51,7 @@ class ChatRoomController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|string|max:255',
             'description' => 'nullable|string|max:1000',
             'type' => 'required|in:private,group',
             'participants' => 'nullable|array',
@@ -70,9 +70,42 @@ class ChatRoomController extends Controller
         try {
             $user = $request->user();
 
+            // For private chat, check if chat already exists
+            if ($request->type === 'private' && $request->has('participants')) {
+                $participantId = $request->participants[0];
+                
+                // Check if private chat already exists between these users
+                $existingChat = ChatRoom::where('type', 'private')
+                    ->whereHas('participants', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    })
+                    ->whereHas('participants', function($q) use ($participantId) {
+                        $q->where('user_id', $participantId);
+                    })
+                    ->first();
+
+                if ($existingChat) {
+                    DB::commit();
+                    $existingChat->load(['creator', 'activeParticipants']);
+                    return response()->json([
+                        'message' => 'Private chat already exists',
+                        'data' => $existingChat
+                    ]);
+                }
+            }
+
+            // Generate chat room name
+            $chatRoomName = $request->name;
+            if (!$chatRoomName && $request->type === 'private' && $request->has('participants')) {
+                $participant = User::find($request->participants[0]);
+                $chatRoomName = "Chat with {$participant->name}";
+            } elseif (!$chatRoomName) {
+                $chatRoomName = $request->type === 'private' ? 'Private Chat' : 'Group Chat';
+            }
+
             // Create chat room
             $chatRoom = ChatRoom::create([
-                'name' => $request->name,
+                'name' => $chatRoomName,
                 'description' => $request->description,
                 'type' => $request->type,
                 'created_by' => $user->id,
@@ -107,7 +140,7 @@ class ChatRoomController extends Controller
 
             return response()->json([
                 'message' => 'Chat room created successfully',
-                'chat_room' => $chatRoom
+                'data' => $chatRoom
             ], 201);
 
         } catch (\Exception $e) {

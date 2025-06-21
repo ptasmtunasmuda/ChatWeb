@@ -45,8 +45,12 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::put('/password', [UserController::class, 'changePassword']);
         Route::get('/activity-logs', [UserController::class, 'activityLogs']);
         Route::post('/update-last-seen', [UserController::class, 'updateLastSeen']);
+        Route::post('/heartbeat', [UserController::class, 'heartbeat']);
         Route::get('/search', [UserController::class, 'search']);
     });
+
+    // Users list for contacts
+    Route::get('/users', [UserController::class, 'index']);
 
     // Chat Room routes
     Route::apiResource('chat-rooms', ChatRoomController::class);

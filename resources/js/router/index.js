@@ -13,7 +13,7 @@ import AdminChats from '../components/admin/AdminChats.vue';
 const routes = [
     {
         path: '/',
-        redirect: '/dashboard'
+        redirect: '/chat'  // Default ke chat, nanti diatur di navigation guard
     },
     {
         path: '/login',
@@ -40,6 +40,13 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('../components/Profile.vue'),
+        meta: { requiresAuth: true }
+    },
+    // Admin routes - hanya untuk admin
+    {
         path: '/admin',
         name: 'AdminDashboard',
         component: AdminDashboard,
@@ -56,18 +63,6 @@ const routes = [
         name: 'AdminChats',
         component: AdminChats,
         meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    {
-        path: '/profile',
-        name: 'Profile',
-        component: () => import('../components/Profile.vue'),
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/forgot-password',
-        name: 'ForgotPassword',
-        component: () => import('../components/auth/ForgotPassword.vue'),
-        meta: { requiresGuest: true }
     }
 ];
 
@@ -83,9 +78,21 @@ router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next('/login');
     } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-        next('/dashboard');
+        // Admin tetap ke dashboard, user biasa ke chat
+        if (authStore.isAdmin) {
+            next('/dashboard');
+        } else {
+            next('/chat');
+        }
     } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
-        next('/dashboard');
+        next('/chat');
+    } else if (to.path === '/' && authStore.isAuthenticated) {
+        // Handle redirect dari root path berdasarkan role
+        if (authStore.isAdmin) {
+            next('/dashboard');
+        } else {
+            next('/chat');
+        }
     } else {
         next();
     }

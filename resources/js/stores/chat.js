@@ -48,8 +48,10 @@ export const useChatStore = defineStore('chat', () => {
         loading.value = true;
         try {
             const response = await axios.get(`/api/chat-rooms/${id}`);
+            console.log('Chat room response:', response.data); // Debug log
             currentChatRoom.value = response.data;
-            participants.value = response.data.active_participants || [];
+            participants.value = response.data.active_participants || response.data.activeParticipants || [];
+            console.log('Participants:', participants.value); // Debug log
             return { success: true };
         } catch (error) {
             console.error('Error fetching chat room:', error);

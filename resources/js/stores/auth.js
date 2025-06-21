@@ -22,18 +22,18 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await axios.post('/api/auth/login', credentials);
             const { user: userData, token: userToken } = response.data;
-            
+
             user.value = userData;
             token.value = userToken;
-            
+
             localStorage.setItem('token', userToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
-            
+
             return { success: true };
         } catch (error) {
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Login failed' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Login failed'
             };
         } finally {
             loading.value = false;
@@ -45,18 +45,18 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await axios.post('/api/auth/register', userData);
             const { user: newUser, token: userToken } = response.data;
-            
+
             user.value = newUser;
             token.value = userToken;
-            
+
             localStorage.setItem('token', userToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
-            
+
             return { success: true };
         } catch (error) {
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Registration failed' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Registration failed'
             };
         } finally {
             loading.value = false;
@@ -65,6 +65,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     const logout = async () => {
         try {
+            // Broadcast offline status before logout
+            if (window.Echo && user.value) {
+                await axios.post('/api/user/update-last-seen');
+            }
+            
             await axios.post('/api/auth/logout');
         } catch (error) {
             console.error('Logout error:', error);
@@ -78,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const fetchUser = async () => {
         if (!token.value) return;
-        
+
         try {
             const response = await axios.get('/api/auth/user');
             user.value = response.data;
@@ -98,9 +103,9 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = response.data;
             return { success: true };
         } catch (error) {
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Profile update failed' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Profile update failed'
             };
         } finally {
             loading.value = false;
@@ -113,9 +118,9 @@ export const useAuthStore = defineStore('auth', () => {
             await axios.put('/api/auth/password', passwordData);
             return { success: true };
         } catch (error) {
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Password change failed' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Password change failed'
             };
         } finally {
             loading.value = false;

@@ -1,7 +1,7 @@
 <template>
-  <div id="app" class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50">
-    <!-- Navigation -->
-    <nav v-if="authStore.isAuthenticated" class="glass border-b border-white/20 sticky top-0 z-40">
+  <div id="app" class="min-h-screen bg-gray-50">
+    <!-- Navigation - Hanya untuk Admin -->
+    <nav v-if="authStore.isAuthenticated && authStore.isAdmin" class="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <!-- Logo -->
@@ -10,18 +10,18 @@
               to="/dashboard"
               class="flex items-center space-x-3 group"
             >
-              <div class="w-10 h-10 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-purple group-hover:shadow-purple-lg transition-all duration-300 group-hover:scale-110">
+              <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center group-hover:bg-blue-700 transition-colors duration-200">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                 </svg>
               </div>
-              <span class="text-xl font-bold gradient-text font-display">
+              <span class="text-xl font-bold text-gray-900">
                 ChatWeb
               </span>
             </router-link>
           </div>
 
-          <!-- Navigation Links -->
+          <!-- Navigation Links - Hanya untuk Admin -->
           <div class="hidden md:flex items-center space-x-2">
             <router-link
               to="/dashboard"
@@ -47,7 +47,6 @@
             </router-link>
 
             <router-link
-              v-if="authStore.isAdmin"
               to="/admin"
               class="nav-link"
               :class="{ 'nav-link-active': $route.path.startsWith('/admin') }"
@@ -63,15 +62,15 @@
             <div class="relative ml-4">
               <button
                 @click="showUserMenu = !showUserMenu"
-                class="flex items-center space-x-2 p-2 rounded-xl hover:bg-white/20 transition-all duration-300 group"
+                class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
-                <div class="w-8 h-8 bg-gradient-to-r from-primary-400 to-accent-400 rounded-lg flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-purple transition-all duration-300">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
                   {{ authStore.user?.name?.charAt(0).toUpperCase() }}
                 </div>
-                <span class="hidden lg:block text-sm font-medium text-secondary-700">
+                <span class="hidden lg:block text-sm font-medium text-gray-700">
                   {{ authStore.user?.name }}
                 </span>
-                <svg class="w-4 h-4 text-secondary-500 transition-transform duration-300" :class="{ 'rotate-180': showUserMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 text-gray-500 transition-transform duration-200" :class="{ 'rotate-180': showUserMenu }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
               </button>
@@ -87,11 +86,11 @@
               >
                 <div
                   v-if="showUserMenu"
-                  class="absolute right-0 mt-2 w-56 glass rounded-2xl shadow-xl border border-white/20 py-2 z-50"
+                  class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
                 >
-                  <div class="px-4 py-3 border-b border-white/10">
-                    <p class="text-sm font-medium text-secondary-800">{{ authStore.user?.name }}</p>
-                    <p class="text-xs text-secondary-500">{{ authStore.user?.email }}</p>
+                  <div class="px-4 py-3 border-b border-gray-100">
+                    <p class="text-sm font-medium text-gray-900">{{ authStore.user?.name }}</p>
+                    <p class="text-xs text-gray-500">{{ authStore.user?.email }}</p>
                   </div>
 
                   <router-link
@@ -117,13 +116,13 @@
                     Settings
                   </router-link>
 
-                  <div class="border-t border-white/10 mt-2 pt-2">
+                  <div class="border-t border-gray-100 mt-2 pt-2">
                     <button
                       @click="logout"
-                      class="dropdown-item text-error-600 hover:bg-error-50"
+                      class="dropdown-item text-red-600 hover:bg-red-50"
                     >
                       <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1"></path>
                       </svg>
                       Sign out
                     </button>
@@ -133,13 +132,13 @@
             </div>
           </div>
 
-          <!-- Mobile menu button -->
+          <!-- Mobile menu button - Hanya untuk Admin -->
           <div class="md:hidden flex items-center">
             <button
               @click="showMobileMenu = !showMobileMenu"
-              class="p-2 rounded-xl hover:bg-white/20 transition-all duration-300"
+              class="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
             >
-              <svg class="w-6 h-6 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
               </svg>
             </button>
@@ -147,7 +146,7 @@
         </div>
       </div>
 
-      <!-- Mobile Navigation -->
+      <!-- Mobile Navigation - Hanya untuk Admin -->
       <transition
         enter-active-class="transition ease-out duration-200"
         enter-from-class="transform opacity-0 scale-95"
@@ -156,17 +155,20 @@
         leave-from-class="transform opacity-100 scale-100"
         leave-to-class="transform opacity-0 scale-95"
       >
-        <div v-if="showMobileMenu" class="md:hidden glass border-t border-white/20">
+        <div v-if="showMobileMenu" class="md:hidden bg-white border-t border-gray-200">
           <div class="px-4 py-3 space-y-2">
             <router-link to="/dashboard" class="mobile-nav-link">Dashboard</router-link>
             <router-link to="/chat" class="mobile-nav-link">Chat</router-link>
-            <router-link v-if="authStore.isAdmin" to="/admin" class="mobile-nav-link">Admin</router-link>
+            <router-link to="/admin" class="mobile-nav-link">Admin</router-link>
             <router-link to="/profile" class="mobile-nav-link">Profile</router-link>
-            <button @click="logout" class="mobile-nav-link text-error-600 w-full text-left">Sign out</button>
+            <button @click="logout" class="mobile-nav-link text-red-600 w-full text-left">Sign out</button>
           </div>
         </div>
       </transition>
     </nav>
+
+    <!-- Simple Header untuk User Biasa (Non-Admin) - DIHAPUS TOTAL -->
+    <!-- User biasa tidak ada navigasi sama sekali -->
 
     <!-- Main content -->
     <main class="flex-1 relative">
@@ -174,7 +176,7 @@
     </main>
 
     <!-- Global notifications -->
-    <div class="fixed top-20 right-4 z-50 space-y-3 max-w-sm">
+    <div class="fixed right-4 z-50 space-y-3 max-w-sm" :class="authStore.isAdmin ? 'top-20' : 'top-4'">
       <transition-group
         name="notification"
         tag="div"
@@ -183,7 +185,7 @@
         <div
           v-for="notification in notifications"
           :key="notification.id"
-          class="notification animate-slide-in-right"
+          class="notification"
           :class="{
             'success': notification.type === 'success',
             'error': notification.type === 'error',
@@ -194,16 +196,16 @@
           <div class="flex items-start">
             <!-- Icon -->
             <div class="flex-shrink-0 mr-3">
-              <svg v-if="notification.type === 'success'" class="w-5 h-5 text-success-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-if="notification.type === 'success'" class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
-              <svg v-else-if="notification.type === 'error'" class="w-5 h-5 text-error-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-else-if="notification.type === 'error'" class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
               </svg>
-              <svg v-else-if="notification.type === 'warning'" class="w-5 h-5 text-warning-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-else-if="notification.type === 'warning'" class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
               </svg>
-              <svg v-else class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg v-else class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
               </svg>
             </div>
@@ -211,18 +213,18 @@
             <!-- Content -->
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold" :class="{
-                'text-success-800': notification.type === 'success',
-                'text-error-800': notification.type === 'error',
-                'text-warning-800': notification.type === 'warning',
-                'text-primary-800': notification.type === 'info'
+                'text-green-800': notification.type === 'success',
+                'text-red-800': notification.type === 'error',
+                'text-yellow-800': notification.type === 'warning',
+                'text-blue-800': notification.type === 'info'
               }">
                 {{ notification.title }}
               </p>
               <p class="text-sm mt-1" :class="{
-                'text-success-600': notification.type === 'success',
-                'text-error-600': notification.type === 'error',
-                'text-warning-600': notification.type === 'warning',
-                'text-primary-600': notification.type === 'info'
+                'text-green-600': notification.type === 'success',
+                'text-red-600': notification.type === 'error',
+                'text-yellow-600': notification.type === 'warning',
+                'text-blue-600': notification.type === 'info'
               }">
                 {{ notification.message }}
               </p>
@@ -233,7 +235,7 @@
               @click="removeNotification(notification.id)"
               class="flex-shrink-0 ml-3 p-1 rounded-lg hover:bg-black/5 transition-colors duration-200"
             >
-              <svg class="w-4 h-4 text-secondary-400 hover:text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
             </button>
@@ -244,9 +246,9 @@
 
     <!-- Loading Overlay -->
     <div v-if="authStore.loading" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div class="glass rounded-2xl p-8 flex flex-col items-center space-y-4">
+      <div class="bg-white rounded-lg p-8 flex flex-col items-center space-y-4 shadow-xl">
         <div class="spinner"></div>
-        <p class="text-secondary-600 font-medium">Loading...</p>
+        <p class="text-gray-600 font-medium">Loading...</p>
       </div>
     </div>
   </div>
@@ -291,14 +293,16 @@ const handleClickOutside = (event) => {
     showUserMenu.value = false;
   }
 
-  if (!mobileMenuButton) {
+  if (!mobileMenuButton && authStore.isAdmin) {
     showMobileMenu.value = false;
   }
 };
 
 // Close mobile menu when route changes
 const handleRouteChange = () => {
-  showMobileMenu.value = false;
+  if (authStore.isAdmin) {
+    showMobileMenu.value = false;
+  }
   showUserMenu.value = false;
 };
 
@@ -327,22 +331,19 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #475569;
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-  transform: scale(1);
+  color: #64748b;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .nav-link:hover {
-  color: #9333ea;
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  color: #3b82f6;
+  background-color: #f8fafc;
 }
 
 .nav-link-active {
-  color: #9333ea;
-  background-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  color: #3b82f6;
+  background-color: #eff6ff;
 }
 
 .dropdown-item {
@@ -351,15 +352,13 @@ onUnmounted(() => {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: #334155;
+  color: #374151;
   transition: all 0.2s ease;
-  border-radius: 0.5rem;
-  margin: 0 0.5rem;
 }
 
 .dropdown-item:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #9333ea;
+  background-color: #f9fafb;
+  color: #3b82f6;
 }
 
 .mobile-nav-link {
@@ -367,14 +366,39 @@ onUnmounted(() => {
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #334155;
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
+  color: #374151;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .mobile-nav-link:hover {
-  color: #9333ea;
-  background-color: rgba(255, 255, 255, 0.2);
+  color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+/* Notification Styles */
+.notification {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid;
+}
+
+.notification.success {
+  border-left-color: #10b981;
+}
+
+.notification.error {
+  border-left-color: #ef4444;
+}
+
+.notification.warning {
+  border-left-color: #f59e0b;
+}
+
+.notification.info {
+  border-left-color: #3b82f6;
 }
 
 /* Notification Animations */
@@ -397,27 +421,19 @@ onUnmounted(() => {
   transition: transform 0.3s ease;
 }
 
-/* Custom Animations */
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+/* Spinner */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e5e7eb;
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
   to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .nav-link {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
+    transform: rotate(360deg);
   }
 }
 </style>

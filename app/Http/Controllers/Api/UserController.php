@@ -108,6 +108,26 @@ class UserController extends Controller
     }
 
     /**
+     * Update last seen timestamp (heartbeat)
+     */
+    public function heartbeat(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->updateLastSeen();
+
+        // Broadcast user online status
+        if (class_exists('\App\Events\UserOnlineStatus')) {
+            broadcast(new \App\Events\UserOnlineStatus($user, true));
+        }
+
+        return response()->json([
+            'message' => 'Heartbeat updated',
+            'last_seen_at' => $user->last_seen_at,
+            'is_online' => true
+        ]);
+    }
+
+    /**
      * Update last seen timestamp
      */
     public function updateLastSeen(Request $request): JsonResponse
@@ -115,8 +135,42 @@ class UserController extends Controller
         $user = $request->user();
         $user->updateLastSeen();
 
+        // Broadcast user offline status
+        if (class_exists('\App\Events\UserOnlineStatus')) {
+            broadcast(new \App\Events\UserOnlineStatus($user, false));
+        }
+
         return response()->json([
             'message' => 'Last seen updated'
+        ]);
+    }
+
+    /**
+     * Get all users for contacts list
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $currentUser = $request->user();
+
+        $users = User::where('is_active', true)
+                    ->where('id', '!=', $currentUser->id)
+                    ->select(['id', 'name', 'email', 'avatar', 'last_seen_at', 'created_at'])
+                    ->orderBy('name')
+                    ->get()
+                    ->map(function ($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'avatar' => $user->avatar,
+                            'last_seen' => $user->last_seen_at,
+                            'is_online' => $user->last_seen_at && $user->last_seen_at->diffInMinutes(now()) < 5,
+                            'created_at' => $user->created_at
+                        ];
+                    });
+
+        return response()->json([
+            'data' => $users
         ]);
     }
 
