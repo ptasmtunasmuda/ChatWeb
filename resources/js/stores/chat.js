@@ -81,20 +81,31 @@ export const useChatStore = defineStore('chat', () => {
 
     const sendMessage = async (chatRoomId, messageData) => {
         try {
+            console.log('🚀 Chat Store: Sending message to API');
+            console.log('📍 Chat Room ID:', chatRoomId);
+            console.log('📨 Message Data:', messageData);
+
             const response = await axios.post(`/api/chat-rooms/${chatRoomId}/messages`, messageData);
             const newMessage = response.data.data;
-            messages.value.push(newMessage);
-            
+
+            console.log('✅ Chat Store: Message sent successfully');
+            console.log('📨 New Message:', newMessage);
+
+            // Don't add message to local store here - real-time event will handle it
+            console.log('⏳ Chat Store: Waiting for real-time event to add message');
+
             // Update chat room's last message
             const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
             if (chatRoomIndex !== -1) {
                 chatRooms.value[chatRoomIndex].latest_message = newMessage;
                 chatRooms.value[chatRoomIndex].updated_at = newMessage.created_at;
+                console.log('✅ Chat Store: Chat room last message updated');
             }
-            
+
             return { success: true, message: newMessage };
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('❌ Chat Store: Send message error:', error);
+            console.error('❌ Error response:', error.response?.data);
             return { success: false, message: error.response?.data?.message || 'Failed to send message' };
         }
     };
@@ -103,12 +114,12 @@ export const useChatStore = defineStore('chat', () => {
         try {
             const response = await axios.put(`/api/chat-rooms/${chatRoomId}/messages/${messageId}`, { content });
             const updatedMessage = response.data.data;
-            
+
             const messageIndex = messages.value.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
                 messages.value[messageIndex] = updatedMessage;
             }
-            
+
             return { success: true, message: updatedMessage };
         } catch (error) {
             console.error('Error editing message:', error);
@@ -119,12 +130,12 @@ export const useChatStore = defineStore('chat', () => {
     const deleteMessage = async (chatRoomId, messageId) => {
         try {
             await axios.delete(`/api/chat-rooms/${chatRoomId}/messages/${messageId}`);
-            
+
             const messageIndex = messages.value.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
                 messages.value.splice(messageIndex, 1);
             }
-            
+
             return { success: true };
         } catch (error) {
             console.error('Error deleting message:', error);
@@ -153,12 +164,12 @@ export const useChatStore = defineStore('chat', () => {
                 user_id: userId,
                 role: role
             });
-            
+
             // Refresh participants
             if (currentChatRoom.value?.id === chatRoomId) {
                 await fetchChatRoom(chatRoomId);
             }
-            
+
             return { success: true, participant: response.data.participant };
         } catch (error) {
             console.error('Error adding participant:', error);
@@ -169,12 +180,12 @@ export const useChatStore = defineStore('chat', () => {
     const removeParticipant = async (chatRoomId, userId) => {
         try {
             await axios.delete(`/api/chat-rooms/${chatRoomId}/participants/${userId}`);
-            
+
             // Refresh participants
             if (currentChatRoom.value?.id === chatRoomId) {
                 await fetchChatRoom(chatRoomId);
             }
-            
+
             return { success: true };
         } catch (error) {
             console.error('Error removing participant:', error);
@@ -204,13 +215,25 @@ export const useChatStore = defineStore('chat', () => {
 
     // Real-time event handlers
     const addMessage = (message) => {
+        console.log('🎉 Chat Store: Adding real-time message');
+        console.log('📨 Real-time Message:', message);
+
+        // Check if message already exists to avoid duplicates
+        const existingMessage = messages.value.find(m => m.id === message.id);
+        if (existingMessage) {
+            console.log('⚠️ Chat Store: Message already exists, skipping duplicate');
+            return;
+        }
+
         messages.value.push(message);
-        
+        console.log('✅ Chat Store: Real-time message added to store');
+
         // Update chat room's last message
         const chatRoomIndex = chatRooms.value.findIndex(room => room.id === message.chat_room_id);
         if (chatRoomIndex !== -1) {
             chatRooms.value[chatRoomIndex].latest_message = message;
             chatRooms.value[chatRoomIndex].updated_at = message.created_at;
+            console.log('✅ Chat Store: Chat room last message updated via real-time');
         }
     };
 
@@ -237,6 +260,27 @@ export const useChatStore = defineStore('chat', () => {
         const index = onlineUsers.value.findIndex(u => u.id === user.id);
         if (index !== -1) {
             onlineUsers.value.splice(index, 1);
+        }
+    };
+
+    const addChatRoom = (chatRoom) => {
+        // Check if room already exists
+        const existingIndex = chatRooms.value.findIndex(room => room.id === chatRoom.id);
+        if (existingIndex === -1) {
+            chatRooms.value.unshift(chatRoom);
+        }
+    };
+
+    const updateChatRoomLastMessage = (chatRoomId, message) => {
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
+        if (chatRoomIndex !== -1) {
+            chatRooms.value[chatRoomIndex].latest_message = message;
+            chatRooms.value[chatRoomIndex].updated_at = message.created_at;
+
+            // Update unread count if not in current chat room
+            if (currentChatRoom.value?.id !== chatRoomId) {
+                chatRooms.value[chatRoomIndex].unread_count = (chatRooms.value[chatRoomIndex].unread_count || 0) + 1;
+            }
         }
     };
 
@@ -267,12 +311,12 @@ export const useChatStore = defineStore('chat', () => {
         onlineUsers,
         loading,
         messagesLoading,
-        
+
         // Computed
         sortedChatRooms,
         sortedMessages,
         currentChatParticipants,
-        
+
         // Actions
         fetchChatRooms,
         fetchChatRoom,
@@ -285,13 +329,15 @@ export const useChatStore = defineStore('chat', () => {
         removeParticipant,
         sendTypingStatus,
         markMessageAsRead,
-        
+
         // Real-time handlers
         addMessage,
         updateTypingUsers,
         addOnlineUser,
         removeOnlineUser,
-        
+        addChatRoom,
+        updateChatRoomLastMessage,
+
         // Clear functions
         clearCurrentChat,
         clearAll

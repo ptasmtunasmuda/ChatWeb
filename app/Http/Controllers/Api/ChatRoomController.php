@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserActivityLog;
 use App\Events\UserJoinedChatRoom;
 use App\Events\UserLeftChatRoom;
+use App\Events\ChatRoomCreated;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -73,7 +74,7 @@ class ChatRoomController extends Controller
             // For private chat, check if chat already exists
             if ($request->type === 'private' && $request->has('participants')) {
                 $participantId = $request->participants[0];
-                
+
                 // Check if private chat already exists between these users
                 $existingChat = ChatRoom::where('type', 'private')
                     ->whereHas('participants', function($q) use ($user) {
@@ -98,7 +99,8 @@ class ChatRoomController extends Controller
             $chatRoomName = $request->name;
             if (!$chatRoomName && $request->type === 'private' && $request->has('participants')) {
                 $participant = User::find($request->participants[0]);
-                $chatRoomName = "Chat with {$participant->name}";
+                // Use just the participant's name for private chats
+                $chatRoomName = $participant->name;
             } elseif (!$chatRoomName) {
                 $chatRoomName = $request->type === 'private' ? 'Private Chat' : 'Group Chat';
             }
@@ -137,6 +139,9 @@ class ChatRoomController extends Controller
 
             // Load relationships for response
             $chatRoom->load(['creator', 'activeParticipants']);
+
+            // Broadcast chat room created event
+            broadcast(new ChatRoomCreated($chatRoom));
 
             return response()->json([
                 'message' => 'Chat room created successfully',

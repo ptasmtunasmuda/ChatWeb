@@ -23,6 +23,13 @@ class MessageSent implements ShouldBroadcast
     public function __construct(Message $message)
     {
         $this->message = $message->load(['user', 'replyToMessage.user']);
+
+        \Log::info('MessageSent event created', [
+            'message_id' => $this->message->id,
+            'chat_room_id' => $this->message->chat_room_id,
+            'user_id' => $this->message->user_id,
+            'content' => substr($this->message->content, 0, 50) . '...'
+        ]);
     }
 
     /**
@@ -34,6 +41,8 @@ class MessageSent implements ShouldBroadcast
     {
         return [
             new PrivateChannel('chat-room.' . $this->message->chat_room_id),
+            new Channel('admin-messages'), // For admin real-time updates
+            new Channel('user-messages'), // For all users' chat list updates
         ];
     }
 
@@ -42,7 +51,7 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastAs(): string
     {
-        return 'message.sent';
+        return 'MessageSent';
     }
 
     /**
@@ -50,10 +59,18 @@ class MessageSent implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
-        return [
+        $data = [
             'message' => $this->message,
             'chat_room_id' => $this->message->chat_room_id,
             'timestamp' => now()->toISOString(),
         ];
+
+        \Log::info('MessageSent broadcasting data', [
+            'message_id' => $this->message->id,
+            'channels' => array_map(fn($channel) => $channel->name ?? get_class($channel), $this->broadcastOn()),
+            'data_keys' => array_keys($data)
+        ]);
+
+        return $data;
     }
 }

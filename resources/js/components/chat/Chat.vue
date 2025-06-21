@@ -15,7 +15,7 @@
             </div>
           </div>
           <div class="relative">
-            <button 
+            <button
               @click="dropdownOpen = !dropdownOpen"
               class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
@@ -23,12 +23,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>
-            <div 
-              v-if="dropdownOpen" 
+            <div
+              v-if="dropdownOpen"
               class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
             >
               <div class="py-1">
-                <router-link 
+                <router-link
                   to="/profile"
                   class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   @click="dropdownOpen = false"
@@ -73,7 +73,7 @@
       <!-- Navigation -->
       <div class="px-4 py-3 border-b border-gray-200">
         <div class="flex justify-between text-sm">
-          <button 
+          <button
             @click="currentView = 'chats'"
             :class="[
               'flex flex-col items-center transition-colors',
@@ -85,7 +85,7 @@
             </svg>
             Chats
           </button>
-          <button 
+          <button
             @click="currentView = 'calls'"
             :class="[
               'flex flex-col items-center transition-colors',
@@ -97,7 +97,7 @@
             </svg>
             Calls
           </button>
-          <button 
+          <button
             @click="currentView = 'contacts'"
             :class="[
               'flex flex-col items-center transition-colors',
@@ -109,7 +109,7 @@
             </svg>
             Contacts
           </button>
-          <button 
+          <button
             @click="currentView = 'notifications'"
             :class="[
               'flex flex-col items-center transition-colors',
@@ -163,8 +163,8 @@
                 <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                   {{ room.name.charAt(0).toUpperCase() }}
                 </div>
-                <div 
-                  v-if="room.unread_count > 0" 
+                <div
+                  v-if="room.unread_count > 0"
                   class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
                 >
                   {{ room.unread_count > 9 ? '9+' : room.unread_count }}
@@ -180,7 +180,7 @@
         </div>
 
         <!-- Contacts Tab -->
-        <Contacts 
+        <Contacts
           v-else-if="currentView === 'contacts'"
           :search-query="searchQuery"
           @user-selected="handleUserSelected"
@@ -211,7 +211,7 @@
     <div class="flex-1 flex flex-col">
       <!-- Welcome Screen -->
       <div v-if="!currentChatRoom" class="flex-1 flex items-center justify-center bg-white">
-        <button 
+        <button
           @click="isShowChatMenu = !isShowChatMenu"
           class="xl:hidden absolute top-4 left-4 p-2 rounded-lg hover:bg-gray-100"
         >
@@ -243,7 +243,7 @@
         <div class="bg-white border-b border-gray-200 px-4 py-3">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
-              <button 
+              <button
                 @click="isShowChatMenu = !isShowChatMenu"
                 class="xl:hidden mr-3 p-2 rounded-lg hover:bg-gray-100"
               >
@@ -255,8 +255,8 @@
                 <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                   {{ selectedChatRoom?.name?.charAt(0).toUpperCase() }}
                 </div>
-                <div 
-                  v-if="selectedChatRoom?.active" 
+                <div
+                  v-if="selectedChatRoom?.active"
                   class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
                 ></div>
               </div>
@@ -315,8 +315,8 @@
     />
 
     <!-- Mobile Overlay -->
-    <div 
-      v-if="isShowChatMenu" 
+    <div
+      v-if="isShowChatMenu"
       @click="isShowChatMenu = false"
       class="fixed inset-0 bg-black bg-opacity-50 z-40 xl:hidden"
     ></div>
@@ -404,10 +404,20 @@ const selectChatRoom = async (room) => {
 };
 
 const handleSendMessage = async (messageData) => {
-  if (!currentChatRoom.value) return;
+  if (!currentChatRoom.value) {
+    console.warn('⚠️ Cannot send message: no current chat room');
+    return;
+  }
+
+  console.log('📤 Sending message:', messageData);
+  console.log('📍 To chat room:', currentChatRoom.value.id);
 
   const result = await chatStore.sendMessage(currentChatRoom.value.id, messageData);
-  if (!result.success) {
+
+  if (result.success) {
+    console.log('✅ Message sent successfully:', result);
+  } else {
+    console.error('❌ Failed to send message:', result);
     notificationStore.error('Error', result.message);
   }
 };
@@ -445,11 +455,11 @@ const loadMoreMessages = async () => {
 const handleChatCreated = async (chatRoom) => {
   // Refresh chat rooms list
   await chatStore.fetchChatRooms();
-  
+
   // Switch to chats view and select the new chat room
   currentView.value = 'chats';
   await selectChatRoom(chatRoom);
-  
+
   notificationStore.success('Success', 'Chat room created successfully!');
 };
 
@@ -468,7 +478,7 @@ const handleSearch = async () => {
   if (currentView.value === 'contacts') {
     // Update search query for local filtering
     usersStore.searchQuery = searchQuery.value;
-    
+
     // Only call API for longer queries
     if (searchQuery.value.trim() && searchQuery.value.length >= 2) {
       await usersStore.searchUsers(searchQuery.value);
@@ -491,7 +501,7 @@ const logout = async () => {
 const initializeChat = async () => {
   // Start heartbeat for online status
   usersStore.startHeartbeat();
-  
+
   // Setup real-time listeners for user status
   usersStore.setupRealtimeListeners();
 
@@ -516,36 +526,150 @@ const initializeChat = async () => {
 
 // Setup real-time listeners
 const setupRealTimeListeners = () => {
-  if (!window.Echo) return;
+  if (!window.Echo) {
+    console.error('❌ Laravel Echo not available');
+    return;
+  }
 
-  // Listen for new messages in current chat room
-  if (currentChatRoom.value) {
-    window.Echo.private(`chat-room.${currentChatRoom.value.id}`)
-      .listen('.message.sent', (e) => {
-        chatStore.addMessage(e.message);
-      })
-      .listen('.user.typing', (e) => {
-        if (e.user.id !== authStore.user.id) {
-          chatStore.updateTypingUsers(e.user, e.is_typing);
+  console.log('🔧 Setting up global real-time listeners...');
 
-          // Clear typing indicator after 3 seconds
-          if (e.is_typing) {
-            setTimeout(() => {
-              chatStore.updateTypingUsers(e.user, false);
-            }, 3000);
-          }
-        }
-      })
-      .listen('.user.joined', (e) => {
-        if (e.user.id !== authStore.user.id) {
-          notificationStore.info('User Joined', `${e.user.name} joined the chat`);
-        }
-      })
-      .listen('.user.left', (e) => {
-        if (e.user.id !== authStore.user.id) {
-          notificationStore.info('User Left', `${e.user.name} left the chat`);
+  try {
+    // Listen for new chat rooms
+    const chatRoomsChannel = window.Echo.channel('chat-rooms');
+    console.log('📡 Chat rooms channel created:', chatRoomsChannel);
+
+    chatRoomsChannel.listen('ChatRoomCreated', (e) => {
+      console.log('🎉 New chat room created event received:', e);
+      // Add new room to the list if user is participant
+      if (e.chatRoom && e.chatRoom.participants && e.chatRoom.participants.some(p => p.id === authStore.user.id)) {
+        chatStore.addChatRoom(e.chatRoom);
+        notificationStore.info('New Chat', `New chat room: ${e.chatRoom.name}`);
+      }
+    }).error((error) => {
+      console.error('❌ Error on chat-rooms channel:', error);
+    });
+
+    // Listen for messages in all chat rooms for sidebar updates
+    const userMessagesChannel = window.Echo.channel('user-messages');
+    console.log('📡 User messages channel created:', userMessagesChannel);
+
+    userMessagesChannel.listen('MessageSent', (e) => {
+      console.log('🎉 Global MessageSent event received:', e);
+      console.log('📨 Message data for sidebar update:', e.message);
+
+      if (e.message && e.message.chat_room_id) {
+        // Update chat room's latest message and timestamp
+        chatStore.updateChatRoomLastMessage(e.message.chat_room_id, e.message);
+        console.log('✅ Chat room sidebar updated');
+
+        // Don't add to current room here - private channel handles it
+        // This channel is only for sidebar updates
+      } else {
+        console.warn('⚠️ Invalid message data for sidebar update');
+      }
+    }).error((error) => {
+      console.error('❌ Error on user-messages channel:', error);
+    });
+
+    // Add global listener for user-messages channel too
+    if (userMessagesChannel.subscription) {
+      userMessagesChannel.subscription.bind_global((eventName, data) => {
+        console.log('🌍 Global event on user-messages channel:', eventName, data);
+      });
+    }
+
+    console.log('✅ Global real-time listeners setup complete');
+  } catch (error) {
+    console.error('❌ Failed to setup real-time listeners:', error);
+  }
+};
+
+// Setup room-specific listeners
+const setupRoomListeners = () => {
+  if (!window.Echo || !currentChatRoom.value) {
+    console.warn('⚠️ Cannot setup room listeners: Echo or currentChatRoom not available');
+    return;
+  }
+
+  console.log(`🔧 Setting up listeners for room: ${currentChatRoom.value.id}`);
+
+  try {
+    const channel = window.Echo.private(`chat-room.${currentChatRoom.value.id}`);
+
+    console.log('📡 Private channel created:', channel);
+
+    // Listen for MessageSent events via global listener (most reliable)
+    if (channel.subscription) {
+      channel.subscription.bind_global((eventName, data) => {
+        console.log('🌍 Global event received on private channel:', eventName, data);
+
+        if (eventName === 'MessageSent' && data.message) {
+          console.log('🎯 MessageSent received via global listener!');
+          chatStore.addMessage(data.message);
         }
       });
+    }
+
+    // Backup: Standard MessageSent listener
+    channel.listen('MessageSent', (e) => {
+      console.log('🎉 MessageSent event received via standard listener:', e);
+      // Don't add message here to avoid duplicates - global listener handles it
+    });
+
+    // Listen for all events for debugging
+    console.log('🔍 Channel object:', channel);
+    console.log('🔍 Channel name:', channel.name);
+    console.log('🔍 Channel subscription:', channel.subscription);
+
+    // Listen for typing events
+    channel.listen('.user.typing', (e) => {
+      console.log('⌨️ Typing event received:', e);
+      if (e.user && e.user.id !== authStore.user.id) {
+        chatStore.updateTypingUsers(e.user, e.is_typing);
+
+        // Clear typing indicator after 3 seconds
+        if (e.is_typing) {
+          setTimeout(() => {
+            chatStore.updateTypingUsers(e.user, false);
+          }, 3000);
+        }
+      }
+    });
+
+    // Listen for user joined events
+    channel.listen('.user.joined', (e) => {
+      console.log('👋 User joined event received:', e);
+      if (e.user && e.user.id !== authStore.user.id) {
+        notificationStore.info('User Joined', `${e.user.name} joined the chat`);
+      }
+    });
+
+    // Listen for user left events
+    channel.listen('.user.left', (e) => {
+      console.log('👋 User left event received:', e);
+      if (e.user && e.user.id !== authStore.user.id) {
+        notificationStore.info('User Left', `${e.user.name} left the chat`);
+      }
+    });
+
+    // Error handling
+    channel.error((error) => {
+      console.error('❌ Error on room channel:', error);
+    });
+
+    console.log('✅ Room listeners setup complete for room:', currentChatRoom.value.id);
+
+    // Test if channel is working by triggering a test event
+    setTimeout(() => {
+      console.log('🧪 Testing channel connectivity...');
+      if (window.Echo && window.Echo.connector && window.Echo.connector.pusher) {
+        const pusher = window.Echo.connector.pusher;
+        console.log('🔍 Pusher connection state:', pusher.connection.state);
+        console.log('🔍 Pusher channels:', Object.keys(pusher.channels.channels));
+      }
+    }, 1000);
+  } catch (error) {
+    console.error('❌ Failed to setup room listeners:', error);
   }
 };
 
@@ -563,32 +687,49 @@ watch(currentView, (newView) => {
 
 // Watch for chat room changes to setup listeners
 watch(currentChatRoom, (newRoom, oldRoom) => {
+  console.log('🔄 Chat room changed:', { oldRoom: oldRoom?.id, newRoom: newRoom?.id });
+
   if (oldRoom && window.Echo) {
-    window.Echo.leave(`chat-room.${oldRoom.id}`);
+    console.log(`🧹 Leaving room channel: ${oldRoom.id}`);
+    try {
+      window.Echo.leave(`chat-room.${oldRoom.id}`);
+      console.log(`✅ Successfully left room channel: ${oldRoom.id}`);
+    } catch (error) {
+      console.error(`❌ Error leaving room channel ${oldRoom.id}:`, error);
+    }
   }
 
   if (newRoom) {
-    setupRealTimeListeners();
+    console.log(`🔧 Setting up listeners for new room: ${newRoom.id}`);
+    setupRoomListeners();
   }
 });
 
-onMounted(() => {
-  initializeChat();
+onMounted(async () => {
+  await initializeChat();
+
+  // Setup global listeners only once
+  if (!window.globalListenersSetup) {
+    setupRealTimeListeners();
+    window.globalListenersSetup = true;
+  }
 });
 
 onUnmounted(() => {
   // Stop heartbeat
   usersStore.stopHeartbeat();
-  
+
   // Leave channels
   if (currentChatRoom.value && window.Echo) {
     window.Echo.leave(`chat-room.${currentChatRoom.value.id}`);
   }
-  
+
   if (window.Echo) {
     window.Echo.leave('users-status');
+    window.Echo.leave('chat-rooms');
+    window.Echo.leave('user-messages');
   }
-  
+
   chatStore.clearCurrentChat();
 });
 </script>

@@ -332,7 +332,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useAdminStore } from '../../stores/admin';
 import { useNotificationStore } from '../../stores/notifications';
 import { debounce } from 'lodash-es';
@@ -494,8 +494,77 @@ const exportData = () => {
   notificationStore.info('Info', 'Export functionality will be implemented');
 };
 
+// Real-time listeners
+const setupRealTimeListeners = () => {
+  if (!window.Echo) {
+    console.error('Laravel Echo not available for admin');
+    return;
+  }
+
+  console.log('🔧 Setting up admin real-time listeners...');
+
+  // Listen for new chat rooms
+  window.Echo.channel('admin-chat-rooms')
+    .listen('ChatRoomCreated', (e) => {
+      console.log('🎉 Admin: New chat room created:', e);
+      // Add new room to the list
+      rooms.value.unshift(e.chatRoom);
+      updateStats();
+      notificationStore.info('New Chat Room', `${e.chatRoom.name} has been created`);
+    })
+    .listen('ChatRoomUpdated', (e) => {
+      console.log('📝 Admin: Chat room updated:', e);
+      // Update existing room in the list
+      const index = rooms.value.findIndex(room => room.id === e.chatRoom.id);
+      if (index !== -1) {
+        rooms.value[index] = e.chatRoom;
+      }
+      updateStats();
+    })
+    .listen('ChatRoomDeleted', (e) => {
+      console.log('🗑️ Admin: Chat room deleted:', e);
+      // Remove room from the list
+      rooms.value = rooms.value.filter(room => room.id !== e.chatRoomId);
+      updateStats();
+      notificationStore.info('Chat Room Deleted', 'A chat room has been deleted');
+    })
+    .error((error) => {
+      console.error('❌ Error on admin-chat-rooms channel:', error);
+    });
+
+  // Listen for new messages
+  window.Echo.channel('admin-messages')
+    .listen('MessageSent', (e) => {
+      console.log('💬 Admin: New message sent:', e);
+      // Update message count for the room
+      const room = rooms.value.find(r => r.id === e.message.chat_room_id);
+      if (room) {
+        room.messages_count = (room.messages_count || 0) + 1;
+        room.updated_at = e.message.created_at;
+      }
+      updateStats();
+    })
+    .error((error) => {
+      console.error('❌ Error on admin-messages channel:', error);
+    });
+
+  console.log('✅ Admin real-time listeners setup complete');
+};
+
+const cleanupRealTimeListeners = () => {
+  if (!window.Echo) return;
+
+  window.Echo.leaveChannel('admin-chat-rooms');
+  window.Echo.leaveChannel('admin-messages');
+};
+
 onMounted(() => {
   fetchRooms();
+  setupRealTimeListeners();
+});
+
+onUnmounted(() => {
+  cleanupRealTimeListeners();
 });
 </script>
 

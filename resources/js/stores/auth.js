@@ -29,6 +29,12 @@ export const useAuthStore = defineStore('auth', () => {
             localStorage.setItem('token', userToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
 
+            // Initialize Echo with auth token for private channels
+            if (window.initializeEcho) {
+                console.log('🔐 Auth Store: Initializing Echo with auth token');
+                await window.initializeEcho(userToken);
+            }
+
             return { success: true };
         } catch (error) {
             return {
@@ -69,7 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
             if (window.Echo && user.value) {
                 await axios.post('/api/user/update-last-seen');
             }
-            
+
             await axios.post('/api/auth/logout');
         } catch (error) {
             console.error('Logout error:', error);
@@ -78,6 +84,11 @@ export const useAuthStore = defineStore('auth', () => {
             token.value = null;
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
+
+            // Disconnect Echo
+            if (window.Echo) {
+                window.Echo.disconnect();
+            }
         }
     };
 
@@ -87,6 +98,12 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await axios.get('/api/auth/user');
             user.value = response.data;
+
+            // Initialize Echo with auth token if not already initialized
+            if (window.initializeEcho && token.value && !window.echoInitialized) {
+                console.log('🔐 Auth Store: Initializing Echo from fetchUser');
+                await window.initializeEcho(token.value);
+            }
         } catch (error) {
             console.error('Fetch user error:', error);
             // If token is invalid, logout

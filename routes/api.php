@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\TypingController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\ChatController as AdminChatController;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +28,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 });
+
+// Broadcasting routes for WebSocket authentication
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 // Protected routes
 Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {

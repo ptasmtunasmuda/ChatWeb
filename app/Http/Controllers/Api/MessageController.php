@@ -121,8 +121,15 @@ class MessageController extends Controller
             // Load relationships for response
             $message->load(['user', 'replyToMessage.user']);
 
-            // Broadcast the message to all participants
-            broadcast(new MessageSent($message))->toOthers();
+            // Broadcast the message to all participants (including sender)
+            \Log::info('Broadcasting MessageSent event', [
+                'message_id' => $message->id,
+                'chat_room_id' => $message->chat_room_id,
+                'user_id' => $message->user_id,
+                'content' => $message->content
+            ]);
+            broadcast(new MessageSent($message));
+            \Log::info('MessageSent event broadcasted successfully');
 
             return response()->json([
                 'message' => 'Message sent successfully',
