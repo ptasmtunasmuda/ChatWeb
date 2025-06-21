@@ -13,7 +13,7 @@ export const useUsersStore = defineStore('users', () => {
         if (!searchQuery.value || searchQuery.value.length < 2) {
             return users.value;
         }
-        
+
         const query = searchQuery.value.toLowerCase();
         return users.value.filter(user =>
             user.name.toLowerCase().includes(query) ||
@@ -38,9 +38,9 @@ export const useUsersStore = defineStore('users', () => {
             return { success: true };
         } catch (error) {
             console.error('Error fetching users:', error);
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Failed to fetch users' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to fetch users'
             };
         } finally {
             loading.value = false;
@@ -49,7 +49,7 @@ export const useUsersStore = defineStore('users', () => {
 
     const searchUsers = async (query) => {
         searchQuery.value = query;
-        
+
         // If query is empty or too short, just filter existing users locally
         if (!query.trim() || query.length < 2) {
             return { success: true };
@@ -64,7 +64,7 @@ export const useUsersStore = defineStore('users', () => {
             return { success: true };
         } catch (error) {
             console.error('Error searching users:', error);
-            
+
             // If search fails, fallback to local filtering
             console.log('Falling back to local search...');
             return { success: true };
@@ -80,15 +80,15 @@ export const useUsersStore = defineStore('users', () => {
                 type: 'private',
                 participants: [userId]
             });
-            return { 
-                success: true, 
+            return {
+                success: true,
                 data: response.data.data // Note: response structure is { message, data }
             };
         } catch (error) {
             console.error('Error creating private chat:', error);
-            return { 
-                success: false, 
-                message: error.response?.data?.message || 'Failed to create chat' 
+            return {
+                success: false,
+                message: error.response?.data?.message || 'Failed to create chat'
             };
         } finally {
             loading.value = false;

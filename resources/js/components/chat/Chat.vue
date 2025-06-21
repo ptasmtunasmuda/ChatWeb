@@ -10,8 +10,8 @@
               {{ authStore.user?.name?.charAt(0).toUpperCase() || 'A' }}
             </div>
             <div class="ml-3">
-              <p class="font-semibold text-gray-900">{{ authStore.user?.name || 'Alon Smith' }}</p>
-              <p class="text-sm text-gray-500">Software Developer</p>
+              <p class="font-semibold text-gray-900">{{ authStore.user?.name }}</p>
+              <p class="text-sm text-gray-500">ChatWeb</p>
             </div>
           </div>
           <div class="relative">
@@ -163,6 +163,12 @@
                 <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                   {{ getChatAvatarInitial(room) }}
                 </div>
+                <!-- Online indicator for private chats -->
+                <div
+                  v-if="isOtherParticipantOnline(room)"
+                  class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
+                ></div>
+                <!-- Unread count badge -->
                 <div
                   v-if="room.unread_count > 0"
                   class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
@@ -256,14 +262,14 @@
                   {{ getChatAvatarInitial(selectedChatRoom) }}
                 </div>
                 <div
-                  v-if="selectedChatRoom?.active"
+                  v-if="isOtherParticipantOnline(selectedChatRoom)"
                   class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
                 ></div>
               </div>
               <div class="ml-3">
                 <p class="font-semibold text-gray-900">{{ getChatDisplayName(selectedChatRoom) }}</p>
-                <p class="text-sm text-gray-500">
-                  {{ selectedChatRoom?.active ? 'Active now' : `Last seen at ${selectedChatRoom?.time}` }}
+                <p class="text-sm" :class="isOtherParticipantOnline(selectedChatRoom) ? 'text-green-600' : 'text-gray-500'">
+                  {{ getChatStatusText(selectedChatRoom) }}
                 </p>
               </div>
             </div>
@@ -373,6 +379,56 @@ const getChatDisplayName = (room) => {
 const getChatAvatarInitial = (room) => {
   const displayName = getChatDisplayName(room);
   return displayName.charAt(0).toUpperCase();
+};
+
+// Helper function to get other participant from private chat
+const getOtherParticipant = (room) => {
+  if (!room || room.type !== 'private' || !room.participants) return null;
+  return room.participants.find(p => p.id !== authStore.user?.id);
+};
+
+// Helper function to check if other participant is online
+const isOtherParticipantOnline = (room) => {
+  const otherParticipant = getOtherParticipant(room);
+  if (!otherParticipant) return false;
+
+  return usersStore.onlineUsers.some(user => user.id === otherParticipant.id);
+};
+
+// Helper function to format last seen time
+const formatLastSeen = (timestamp) => {
+  if (!timestamp) return 'Long time ago';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInMinutes = (now - date) / (1000 * 60);
+
+  if (diffInMinutes < 1) {
+    return 'Just now';
+  } else if (diffInMinutes < 60) {
+    return `${Math.floor(diffInMinutes)} minutes ago`;
+  } else if (diffInMinutes < 1440) {
+    return `${Math.floor(diffInMinutes / 60)} hours ago`;
+  } else {
+    const days = Math.floor(diffInMinutes / 1440);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  }
+};
+
+// Helper function to get status text for chat header
+const getChatStatusText = (room) => {
+  if (!room || room.type !== 'private') return '';
+
+  const otherParticipant = getOtherParticipant(room);
+  if (!otherParticipant) return '';
+
+  // Check if user is online
+  if (isOtherParticipantOnline(room)) {
+    return 'Online now';
+  }
+
+  // Show last seen time
+  return `Last seen ${formatLastSeen(otherParticipant.last_seen)}`;
 };
 
 const filteredChatRooms = computed(() => {
@@ -525,6 +581,12 @@ const initializeChat = async () => {
 
   // Setup real-time listeners for user status
   usersStore.setupRealtimeListeners();
+
+  // Fetch users data for online status
+  const usersResult = await usersStore.fetchUsers();
+  if (!usersResult.success) {
+    console.warn('⚠️ Failed to fetch users:', usersResult.message);
+  }
 
   // Fetch chat rooms
   const result = await chatStore.fetchChatRooms();
