@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4" ref="messagesContainer">
+  <div class="h-full overflow-y-auto bg-gray-50 p-4 space-y-4" ref="messagesContainer">
     <!-- Loading -->
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 5" :key="i" class="animate-pulse">

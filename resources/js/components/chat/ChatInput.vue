@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-white border-t border-gray-200 p-4">
-    <div class="flex items-end space-x-3">
+  <div class="bg-white border-t border-gray-200 px-4 py-3">
+    <div class="flex items-end space-x-3 max-w-4xl mx-auto">
       <!-- File Upload Button -->
-      <button 
+      <button
         @click="$refs.fileInput.click()"
-        class="flex-shrink-0 w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors duration-200"
+        class="flex-shrink-0 w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
         title="Attach file"
       >
-        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
         </svg>
       </button>
@@ -38,15 +38,15 @@
             @blur="handleBlur"
             placeholder="Type a message..."
             rows="1"
-            class="w-full px-4 py-3 pr-12 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200"
+            class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white resize-none transition-all duration-200 placeholder-gray-400"
             :class="{ 'border-red-300 focus:ring-red-500': error }"
             :disabled="disabled"
           ></textarea>
 
           <!-- Emoji Button -->
-          <button 
+          <button
             @click="toggleEmojiPicker"
-            class="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            class="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
             title="Add emoji"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,8 +60,8 @@
 
         <!-- File preview -->
         <div v-if="selectedFiles.length > 0" class="mt-2 space-y-2">
-          <div 
-            v-for="(file, index) in selectedFiles" 
+          <div
+            v-for="(file, index) in selectedFiles"
             :key="index"
             class="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
           >
@@ -72,7 +72,7 @@
               <span class="text-sm text-gray-700">{{ file.name }}</span>
               <span class="text-xs text-gray-500">({{ formatFileSize(file.size) }})</span>
             </div>
-            <button 
+            <button
               @click="removeFile(index)"
               class="text-red-500 hover:text-red-700"
             >
@@ -85,10 +85,10 @@
       </div>
 
       <!-- Send Button -->
-      <button 
+      <button
         @click="sendMessage"
         :disabled="!canSend || sending"
-        class="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg hover:shadow-xl"
       >
         <svg v-if="sending" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -110,39 +110,14 @@
       class="hidden"
     />
 
-    <!-- Additional Buttons (Desktop) -->
-    <div class="hidden sm:flex items-center space-x-2 mt-3">
-      <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-        </svg>
-      </button>
-      <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-      </button>
-      <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </button>
-      <button class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-blue-600 transition-colors duration-200">
-        <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
-        </svg>
-      </button>
-    </div>
-
     <!-- Emoji Picker -->
-    <div v-if="showEmojiPicker" class="absolute bottom-full right-4 mb-2 p-4 bg-white rounded-lg shadow-lg border border-gray-200">
-      <div class="grid grid-cols-8 gap-2">
-        <button 
-          v-for="emoji in commonEmojis" 
+    <div v-if="showEmojiPicker" class="absolute bottom-full right-4 mb-2 p-3 bg-white rounded-xl shadow-xl border border-gray-100 backdrop-blur-sm">
+      <div class="grid grid-cols-8 gap-1">
+        <button
+          v-for="emoji in commonEmojis"
           :key="emoji"
           @click="insertEmoji(emoji)"
-          class="p-2 hover:bg-gray-100 rounded text-lg"
+          class="p-2 hover:bg-gray-100 rounded-lg text-lg transition-all duration-200 hover:scale-110"
         >
           {{ emoji }}
         </button>
@@ -255,7 +230,7 @@ const sendMessage = async () => {
       const formData = new FormData();
       formData.append('content', messageContent);
       formData.append('type', 'file');
-      
+
       if (props.replyToMessage?.id) {
         formData.append('reply_to_message_id', props.replyToMessage.id);
       }
@@ -339,14 +314,14 @@ const insertEmoji = (emoji) => {
   const textarea = messageInput.value;
   const start = textarea.selectionStart;
   const end = textarea.selectionEnd;
-  
+
   message.value = message.value.substring(0, start) + emoji + message.value.substring(end);
-  
+
   nextTick(() => {
     textarea.focus();
     textarea.setSelectionRange(start + emoji.length, start + emoji.length);
   });
-  
+
   showEmojiPicker.value = false;
 };
 

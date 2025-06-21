@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen bg-gray-50 flex">
+  <div class="h-screen bg-gray-50 flex overflow-hidden">
     <!-- Chat Rooms Sidebar -->
     <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
       <!-- Sidebar Header -->
@@ -244,9 +244,9 @@
       </div>
 
       <!-- Chat Interface -->
-      <div v-else class="flex-1 flex flex-col">
+      <div v-else class="flex-1 flex flex-col h-full">
         <!-- Chat Header -->
-        <div class="bg-white border-b border-gray-200 px-4 py-3">
+        <div class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <button
@@ -293,23 +293,27 @@
           </div>
         </div>
 
-        <!-- Messages Area -->
-        <ChatMessages
-          :messages="sortedMessages"
-          :current-user="authStore.user"
-          :loading="chatStore.messagesLoading"
-          :typing-users="typingUsers"
-          @edit-message="handleEditMessage"
-          @delete-message="handleDeleteMessage"
-          @load-more="loadMoreMessages"
-        />
+        <!-- Messages Area - Scrollable -->
+        <div class="flex-1 min-h-0">
+          <ChatMessages
+            :messages="sortedMessages"
+            :current-user="authStore.user"
+            :loading="chatStore.messagesLoading"
+            :typing-users="typingUsers"
+            @edit-message="handleEditMessage"
+            @delete-message="handleDeleteMessage"
+            @load-more="loadMoreMessages"
+          />
+        </div>
 
-        <!-- Message Input -->
-        <ChatInput
-          @send-message="handleSendMessage"
-          @typing="handleTyping"
-          :disabled="!currentChatRoom"
-        />
+        <!-- Message Input - Fixed at bottom -->
+        <div class="flex-shrink-0">
+          <ChatInput
+            @send-message="handleSendMessage"
+            @typing="handleTyping"
+            :disabled="!currentChatRoom"
+          />
+        </div>
       </div>
     </div>
 
