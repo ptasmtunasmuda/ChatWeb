@@ -39,9 +39,6 @@ export const useAuthStore = defineStore('auth', () => {
                 await window.initializeEcho(userToken);
             }
 
-            // Show success notification
-            notificationStore.success('Login Successful', `Welcome back, ${userData.name}!`);
-
             return { success: true };
         } catch (error) {
             return {
@@ -64,9 +61,6 @@ export const useAuthStore = defineStore('auth', () => {
 
             localStorage.setItem('token', userToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
-
-            // Show success notification
-            notificationStore.success('Registration Successful', `Welcome to ChatWeb, ${newUser.name}!`);
 
             return { success: true };
         } catch (error) {
