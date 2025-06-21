@@ -1,11 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
+import { useNotificationStore } from './notifications';
 
 export const useAuthStore = defineStore('auth', () => {
     const user = ref(null);
     const token = ref(localStorage.getItem('token'));
     const loading = ref(false);
+
+    // Get notification store
+    const notificationStore = useNotificationStore();
 
     // Computed properties
     const isAuthenticated = computed(() => !!token.value);
@@ -35,6 +39,9 @@ export const useAuthStore = defineStore('auth', () => {
                 await window.initializeEcho(userToken);
             }
 
+            // Show success notification
+            notificationStore.success('Login Successful', `Welcome back, ${userData.name}!`);
+
             return { success: true };
         } catch (error) {
             return {
@@ -57,6 +64,9 @@ export const useAuthStore = defineStore('auth', () => {
 
             localStorage.setItem('token', userToken);
             axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
+
+            // Show success notification
+            notificationStore.success('Registration Successful', `Welcome to ChatWeb, ${newUser.name}!`);
 
             return { success: true };
         } catch (error) {
@@ -85,8 +95,13 @@ export const useAuthStore = defineStore('auth', () => {
 
             await axios.post('/api/auth/logout');
             console.log('✅ Logout API call successful');
+
+            // Show success notification
+            notificationStore.success('Logout Successful', 'You have been logged out successfully');
         } catch (error) {
             console.error('❌ Logout error:', error);
+            // Show error notification
+            notificationStore.error('Logout Error', 'There was an error during logout, but you have been logged out locally');
         } finally {
             // Clear user data first
             user.value = null;
