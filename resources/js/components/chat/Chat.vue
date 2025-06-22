@@ -6,7 +6,7 @@
       <div class="p-4 border-b border-gray-200">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center">
-            <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+            <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
               {{ authStore.user?.name?.charAt(0).toUpperCase() || 'A' }}
             </div>
             <div class="ml-3">
@@ -25,7 +25,7 @@
             </button>
             <div
               v-if="dropdownOpen"
-              class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
+              class="absolute right-0 mt-2 w-48 card z-10"
             >
               <div class="py-1">
                 <router-link
@@ -76,7 +76,7 @@
             v-model="searchQuery"
             type="text"
             :placeholder="currentView === 'contacts' ? 'Search contacts...' : 'Search chats...'"
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             @input="handleSearch"
           />
           <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +175,7 @@
               ]"
             >
               <div class="relative">
-                <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
                   {{ getChatAvatarInitial(room) }}
                 </div>
                 <!-- Online indicator for private chats -->
@@ -273,7 +273,7 @@
                 </svg>
               </button>
               <div class="relative">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
                   {{ getChatAvatarInitial(selectedChatRoom) }}
                 </div>
                 <div

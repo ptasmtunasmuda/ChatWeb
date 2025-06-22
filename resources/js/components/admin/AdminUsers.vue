@@ -464,19 +464,19 @@ onMounted(() => {
 
 <style scoped>
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
@@ -484,7 +484,7 @@ onMounted(() => {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 10px 25px -3px rgba(59, 130, 246, 0.3);
   transform: scale(1.05);
 }
 
@@ -502,7 +502,7 @@ onMounted(() => {
   width: 1.5rem;
   height: 1.5rem;
   border: 2px solid #e2e8f0;
-  border-top: 2px solid #a855f7;
+  border-top: 2px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

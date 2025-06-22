@@ -14,7 +14,7 @@
       <!-- Profile Card -->
       <div class="card mb-8">
         <div class="flex items-center space-x-6">
-          <div class="w-24 h-24 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-purple">
+          <div class="w-24 h-24 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-blue">
             {{ authStore.user?.name?.charAt(0).toUpperCase() }}
           </div>
           <div>
@@ -286,19 +286,19 @@ onMounted(() => {
 
 <style scoped>
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
@@ -306,7 +306,7 @@ onMounted(() => {
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 10px 25px -3px rgba(59, 130, 246, 0.3);
   transform: scale(1.05);
 }
 

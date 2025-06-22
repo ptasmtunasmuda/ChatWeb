@@ -41,7 +41,7 @@
       >
         <!-- Avatar -->
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+          <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
             {{ message.user.name.charAt(0).toUpperCase() }}
           </div>
         </div>
@@ -157,7 +157,7 @@
 
     <!-- Delete Confirmation Modal - Simple -->
     <div v-if="showDeleteConfirm" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl border w-full max-w-sm mx-4 p-4">
+      <div class="card w-full max-w-sm mx-4">
         <h3 class="text-lg font-medium text-gray-900 mb-3">Delete Message?</h3>
 
         <p class="text-gray-600 text-sm mb-4">

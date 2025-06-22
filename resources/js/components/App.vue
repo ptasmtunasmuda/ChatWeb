@@ -79,7 +79,7 @@
 
     <!-- Loading Overlay -->
     <div v-if="authStore.loading" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div class="bg-white rounded-lg p-8 flex flex-col items-center space-y-4 shadow-xl">
+      <div class="card flex flex-col items-center space-y-4">
         <div class="spinner"></div>
         <p class="text-gray-600 font-medium">Loading...</p>
       </div>

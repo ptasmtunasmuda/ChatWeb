@@ -3,7 +3,7 @@
     <div class="max-w-md w-full space-y-8">
       <!-- Header -->
       <div class="text-center">
-        <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-8">
+        <div class="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-8" style="background: var(--primary-gradient)">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
           </svg>
@@ -13,7 +13,7 @@
       </div>
 
       <!-- Success Message -->
-      <div v-if="emailSent" class="bg-white rounded-2xl shadow-lg p-8">
+      <div v-if="emailSent" class="card">
         <div class="text-center">
           <div class="mx-auto w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6">
             <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,7 +44,7 @@
       </div>
 
       <!-- Reset Form -->
-      <div v-else class="bg-white rounded-2xl shadow-lg p-8">
+      <div v-else class="card">
         <form @submit.prevent="handleForgotPassword" class="space-y-6">
           <!-- Email Field -->
           <div>
@@ -57,7 +57,7 @@
                 v-model="form.email"
                 type="email"
                 required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 :class="{ 'border-red-500 focus:ring-red-500': errors.email }"
                 placeholder="Enter your email address"
               />
@@ -74,7 +74,7 @@
           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-medium disabled:opacity-50 transition-opacity"
+            class="btn-primary w-full disabled:opacity-50"
           >
             <span v-if="loading" class="flex items-center justify-center">
               <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

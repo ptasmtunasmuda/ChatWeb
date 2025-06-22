@@ -3,7 +3,7 @@
     <div class="max-w-md w-full space-y-8">
       <!-- Header -->
       <div class="text-center">
-        <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-8">
+        <div class="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-8" style="background: var(--primary-gradient)">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
           </svg>
@@ -13,7 +13,7 @@
       </div>
 
       <!-- Register Form -->
-      <div class="bg-white rounded-2xl shadow-lg p-8">
+      <div class="card">
         <form @submit.prevent="handleRegister" class="space-y-6">
           <!-- Name Field -->
           <div>
@@ -26,7 +26,7 @@
                 v-model="form.name"
                 type="text"
                 required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 :class="{ 'border-red-500 focus:ring-red-500': errors.name }"
                 placeholder="Enter your full name"
               />
@@ -50,7 +50,7 @@
                 v-model="form.email"
                 type="email"
                 required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 :class="{ 'border-red-500 focus:ring-red-500': errors.email }"
                 placeholder="Enter your email"
               />
@@ -74,7 +74,7 @@
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
                 required
-                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 :class="{ 'border-red-500 focus:ring-red-500': errors.password }"
                 placeholder="Create a password"
               />
@@ -106,7 +106,7 @@
                 v-model="form.password_confirmation"
                 :type="showPasswordConfirmation ? 'text' : 'password'"
                 required
-                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                 :class="{ 'border-red-500 focus:ring-red-500': errors.password_confirmation }"
                 placeholder="Confirm your password"
               />
@@ -134,7 +134,7 @@
               v-model="form.terms"
               type="checkbox"
               required
-              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+              class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mt-1"
             />
             <label for="terms" class="ml-3 text-sm text-gray-700 leading-relaxed">
               I agree to the
@@ -148,7 +148,7 @@
           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl font-medium disabled:opacity-50 transition-opacity"
+            class="btn-primary w-full disabled:opacity-50"
           >
             <span v-if="loading" class="flex items-center justify-center">
               <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">

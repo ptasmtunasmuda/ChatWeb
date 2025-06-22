@@ -55,7 +55,7 @@
             @blur="handleBlur"
             placeholder="Type a message..."
             rows="1"
-            class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white resize-none transition-all duration-200 placeholder-gray-400"
+            class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 placeholder-gray-400"
             :class="{ 'border-red-300 focus:ring-red-500': error }"
             :disabled="disabled"
           ></textarea>
@@ -185,7 +185,7 @@ const canSend = computed(() => {
 
 // Dynamic emoji picker position - use absolute positioning relative to chat input
 const emojiPickerClasses = computed(() => {
-  return 'emoji-picker absolute bottom-full right-0 mb-2 z-50 p-3 bg-white rounded-xl shadow-xl border border-gray-100 backdrop-blur-sm';
+  return 'emoji-picker absolute bottom-full right-0 mb-2 z-50 card';
 });
 
 // Watch for editing message changes

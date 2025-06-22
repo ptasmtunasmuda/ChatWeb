@@ -1,6 +1,6 @@
 <template>
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-bounce-in">
+    <div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-bounce-in">
       <div class="p-6 border-b border-secondary-200">
         <div class="flex items-center justify-between">
           <h3 class="text-xl font-bold gradient-text font-display">User Details</h3>
@@ -169,7 +169,7 @@ const editUser = () => {
 
 <style scoped>
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -186,17 +186,17 @@ const editUser = () => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   color: white;
   font-weight: 600;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
   transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 10px 25px -3px rgba(59, 130, 246, 0.3);
   transform: scale(1.05);
 }
 

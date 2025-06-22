@@ -38,9 +38,9 @@
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="card group hover:shadow-purple-lg">
+        <div class="card group hover:shadow-blue-lg">
           <div class="flex items-center">
-            <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-purple group-hover:shadow-purple-lg transition-all duration-300 group-hover:scale-110">
+            <div class="w-12 h-12 bg-gradient-to-r from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-blue group-hover:shadow-blue-lg transition-all duration-300 group-hover:scale-110">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
               </svg>
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div class="card group hover:shadow-purple-lg">
+        <div class="card group hover:shadow-blue-lg">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-gradient-to-r from-success-500 to-success-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:scale-110">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@
           </div>
         </div>
 
-        <div class="card group hover:shadow-purple-lg">
+        <div class="card group hover:shadow-blue-lg">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-gradient-to-r from-warning-500 to-warning-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:scale-110">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +89,7 @@
           </div>
         </div>
 
-        <div class="card group hover:shadow-purple-lg">
+        <div class="card group hover:shadow-blue-lg">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-gradient-to-r from-accent-500 to-accent-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-lg transition-all duration-300 group-hover:scale-110">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +172,7 @@
               class="flex items-center space-x-3 p-3 rounded-xl hover:bg-secondary-50 transition-all duration-300 cursor-pointer group"
               @click="$router.push(`/admin/users/${user.id}`)"
             >
-              <div class="w-10 h-10 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-purple transition-all duration-300">
+              <div class="w-10 h-10 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm group-hover:shadow-blue transition-all duration-300">
                 {{ user.name.charAt(0).toUpperCase() }}
               </div>
               <div class="flex-1 min-w-0">
@@ -386,12 +386,12 @@ const createUserGrowthChart = () => {
       datasets: [{
         label: 'New Users',
         data: userGrowth.value.map(item => item.count),
-        borderColor: '#a855f7',
-        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
         borderWidth: 3,
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: '#a855f7',
+        pointBackgroundColor: '#3b82f6',
         pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
         pointRadius: 5,
@@ -427,7 +427,7 @@ const createUserGrowthChart = () => {
       },
       elements: {
         point: {
-          hoverBackgroundColor: '#a855f7'
+          hoverBackgroundColor: '#3b82f6'
         }
       }
     }
@@ -518,19 +518,19 @@ onMounted(() => {
 
 <style scoped>
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #d946ef);
+  background: linear-gradient(135deg, #3b82f6, #d946ef);
   color: white;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
@@ -538,7 +538,7 @@ onMounted(() => {
 }
 
 .btn-primary:hover {
-  box-shadow: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
+  box-shadow: 0 10px 25px -3px rgba(59, 130, 246, 0.3);
   transform: scale(1.05);
 }
 

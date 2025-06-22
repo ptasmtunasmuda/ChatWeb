@@ -13,7 +13,7 @@
             </p>
           </div>
           <div class="flex items-center space-x-4">
-            <router-link to="/chat" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            <router-link to="/chat" class="btn-primary inline-flex items-center">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
               </svg>
@@ -25,7 +25,7 @@
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="card hover:shadow-xl">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="card hover:shadow-xl">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="card hover:shadow-xl">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,7 +67,7 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+        <div class="card hover:shadow-xl">
           <div class="flex items-center">
             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +86,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Recent Chats -->
         <div class="lg:col-span-2">
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="card">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-bold text-gray-900">Recent Chats</h2>
               <router-link to="/chat" class="text-blue-600 hover:text-blue-700 font-medium text-sm">
@@ -113,7 +113,7 @@
               <h3 class="mt-2 text-sm font-medium text-gray-900">No chats yet</h3>
               <p class="mt-1 text-sm text-gray-500">Start a conversation to see your chats here.</p>
               <div class="mt-6">
-                <router-link to="/chat" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                <router-link to="/chat" class="btn-primary inline-flex items-center">
                   Start Your First Chat
                 </router-link>
               </div>
@@ -127,7 +127,7 @@
                 @click="$router.push(`/chat/${chat.id}`)"
               >
                 <div class="relative">
-                  <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                  <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
                     {{ chat.name.charAt(0).toUpperCase() }}
                   </div>
                   <div v-if="chat.unread_count > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
@@ -151,7 +151,7 @@
         <!-- Quick Actions & Activity -->
         <div class="space-y-6">
           <!-- Quick Actions -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="card">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div class="space-y-3">
               <button class="w-full flex items-center p-3 text-left rounded-lg hover:bg-gray-50 transition-colors duration-200">
@@ -193,7 +193,7 @@
           </div>
 
           <!-- Online Users -->
-          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div class="card">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Online Now</h3>
             <div v-if="onlineUsers.length === 0" class="text-center py-6">
               <p class="text-sm text-gray-500">No users online</p>
@@ -205,7 +205,7 @@
                 class="flex items-center space-x-3"
               >
                 <div class="relative">
-                  <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {{ user.name.charAt(0).toUpperCase() }}
                   </div>
                   <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
