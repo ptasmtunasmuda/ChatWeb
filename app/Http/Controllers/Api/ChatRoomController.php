@@ -88,6 +88,17 @@ class ChatRoomController extends Controller
                 if ($existingChat) {
                     DB::commit();
                     $existingChat->load(['creator', 'activeParticipants']);
+
+                    // Log existing chat found
+                    \Log::info('Existing private chat found:', [
+                        'chat_room_id' => $existingChat->id,
+                        'participants' => $existingChat->activeParticipants->pluck('id', 'name')->toArray()
+                    ]);
+
+                    // Broadcast existing chat to ensure both users have it in their list
+                    \Log::info('Broadcasting existing ChatRoomCreated event', ['chat_room_id' => $existingChat->id]);
+                    broadcast(new ChatRoomCreated($existingChat));
+
                     return response()->json([
                         'message' => 'Private chat already exists',
                         'data' => $existingChat
@@ -140,8 +151,16 @@ class ChatRoomController extends Controller
             // Load relationships for response
             $chatRoom->load(['creator', 'activeParticipants']);
 
+            // Log participants for debugging
+            \Log::info('ChatRoom created with participants:', [
+                'chat_room_id' => $chatRoom->id,
+                'participants' => $chatRoom->activeParticipants->pluck('id', 'name')->toArray()
+            ]);
+
             // Broadcast chat room created event
-            broadcast(new ChatRoomCreated($chatRoom));
+            \Log::info('About to broadcast ChatRoomCreated event', ['chat_room_id' => $chatRoom->id]);
+            $broadcastResult = broadcast(new ChatRoomCreated($chatRoom));
+            \Log::info('ChatRoomCreated broadcast completed', ['result' => $broadcastResult]);
 
             return response()->json([
                 'message' => 'Chat room created successfully',

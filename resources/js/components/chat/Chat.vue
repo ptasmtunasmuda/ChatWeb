@@ -496,6 +496,10 @@ const selectChatRoom = async (room) => {
     const messagesResult = await chatStore.fetchMessages(room.id);
     if (!messagesResult.success) {
       notificationStore.error('Error', messagesResult.message);
+    } else {
+      // Reset unread count when messages are successfully fetched and marked as read
+      console.log('📖 Resetting unread count for room:', room.id);
+      chatStore.resetUnreadCount(room.id);
     }
 
     // Update URL
@@ -616,6 +620,25 @@ const handleSearch = async () => {
 
 
 
+// Fetch and add chat room to list when first message received
+const fetchAndAddChatRoom = async (chatRoomId) => {
+  try {
+    console.log(`🔍 Fetching chat room ${chatRoomId} to add to list...`);
+    const response = await axios.get(`/api/chat-rooms/${chatRoomId}`);
+    const chatRoom = response.data;
+
+    console.log('✅ Chat room fetched:', chatRoom);
+    chatStore.addChatRoom(chatRoom);
+
+    // Update with the message that triggered this
+    // The message will be added by the updateChatRoomLastMessage call
+    console.log('✅ Chat room added to list due to first message');
+  } catch (error) {
+    console.error('❌ Error fetching chat room:', error);
+    // If we can't fetch the room, still try to update the existing data
+  }
+};
+
 // Initialize chat
 const initializeChat = async () => {
   // Start heartbeat for online status
@@ -662,33 +685,64 @@ const setupRealTimeListeners = () => {
     // Listen for new chat rooms
     const chatRoomsChannel = window.Echo.channel('chat-rooms');
     console.log('📡 Chat rooms channel created:', chatRoomsChannel);
+    console.log('📡 Channel name:', chatRoomsChannel.name);
+    console.log('📡 Channel subscription:', chatRoomsChannel.subscription);
 
-    chatRoomsChannel.listen('ChatRoomCreated', (e) => {
-      console.log('🎉 New chat room created event received:', e);
-      // Add new room to the list if user is participant
-      if (e.chatRoom && e.chatRoom.participants && e.chatRoom.participants.some(p => p.id === authStore.user.id)) {
-        chatStore.addChatRoom(e.chatRoom);
-        notificationStore.info('New Chat', `New chat room: ${e.chatRoom.name}`);
-      }
-    }).error((error) => {
-      console.error('❌ Error on chat-rooms channel:', error);
-    });
+    // ChatRoomCreated listener removed - chat rooms only added when first message sent
+    console.log('📝 ChatRoomCreated listener disabled - using message-based chat list');
+
+    // Add global listener for all events on chat-rooms channel
+    if (chatRoomsChannel.subscription) {
+      chatRoomsChannel.subscription.bind_global((eventName, data) => {
+        console.log('🌍 Global event on chat-rooms channel:', eventName, data);
+        if (eventName === 'ChatRoomCreated') {
+          console.log('🌍 ChatRoomCreated detected in global listener!');
+          console.log('🌍 Data structure:', {
+            hasChatRoom: !!data.chatRoom,
+            hasParticipants: !!(data.chatRoom && data.chatRoom.participants),
+            participantsCount: data.chatRoom?.participants?.length || 0,
+            participantIds: data.chatRoom?.participants?.map(p => p.id) || [],
+            fullData: data
+          });
+
+          // ChatRoomCreated event detected but NOT auto-adding to chat list
+          // Chat rooms should only appear in list after first message is sent
+          console.log('🌍 ChatRoomCreated event logged but not adding to chat list');
+          console.log('🌍 Chat rooms will be added only when first message is sent');
+        }
+      });
+    }
 
     // Listen for messages in all chat rooms for sidebar updates
     const userMessagesChannel = window.Echo.channel('user-messages');
     console.log('📡 User messages channel created:', userMessagesChannel);
 
     userMessagesChannel.listen('MessageSent', (e) => {
+      console.log('🎉 SPECIFIC MessageSent listener triggered!');
       console.log('🎉 Global MessageSent event received:', e);
       console.log('📨 Message data for sidebar update:', e.message);
 
       if (e.message && e.message.chat_room_id) {
-        // Update chat room's latest message and timestamp
-        chatStore.updateChatRoomLastMessage(e.message.chat_room_id, e.message);
-        console.log('✅ Chat room sidebar updated');
+        // Check if chat room exists in list
+        const existingRoom = chatStore.chatRooms.find(room => room.id === e.message.chat_room_id);
 
-        // Don't add to current room here - private channel handles it
-        // This channel is only for sidebar updates
+        if (!existingRoom) {
+          console.log('🆕 Chat room not in list, fetching and adding...');
+          // Fetch chat room data and add to list, then update with message
+          fetchAndAddChatRoom(e.message.chat_room_id).then(() => {
+            chatStore.updateChatRoomLastMessage(e.message.chat_room_id, e.message);
+          });
+        } else {
+          console.log('✅ Chat room exists, updating last message');
+          // Update chat room's latest message and timestamp
+          chatStore.updateChatRoomLastMessage(e.message.chat_room_id, e.message);
+        }
+
+        // If user is currently in this chat room, add message to current chat
+        if (currentChatRoom.value && currentChatRoom.value.id === e.message.chat_room_id) {
+          console.log('📨 Adding message to current chat room');
+          chatStore.addMessage(e.message);
+        }
       } else {
         console.warn('⚠️ Invalid message data for sidebar update');
       }
@@ -700,6 +754,34 @@ const setupRealTimeListeners = () => {
     if (userMessagesChannel.subscription) {
       userMessagesChannel.subscription.bind_global((eventName, data) => {
         console.log('🌍 Global event on user-messages channel:', eventName, data);
+
+        if (eventName === 'MessageSent') {
+          console.log('🌍 MessageSent detected in global user-messages listener!');
+          console.log('🌍 Processing MessageSent in global listener as fallback...');
+
+          if (data.message && data.message.chat_room_id) {
+            // Check if chat room exists in list
+            const existingRoom = chatStore.chatRooms.find(room => room.id === data.message.chat_room_id);
+
+            if (!existingRoom) {
+              console.log('🆕 Chat room not in list, fetching and adding...');
+              // Fetch chat room data and add to list, then update with message
+              fetchAndAddChatRoom(data.message.chat_room_id).then(() => {
+                chatStore.updateChatRoomLastMessage(data.message.chat_room_id, data.message);
+              });
+            } else {
+              console.log('✅ Chat room exists, updating last message');
+              // Update chat room's latest message and timestamp
+              chatStore.updateChatRoomLastMessage(data.message.chat_room_id, data.message);
+            }
+
+            // If user is currently in this chat room, add message to current chat
+            if (currentChatRoom.value && currentChatRoom.value.id === data.message.chat_room_id) {
+              console.log('📨 Adding message to current chat room');
+              chatStore.addMessage(data.message);
+            }
+          }
+        }
       });
     }
 

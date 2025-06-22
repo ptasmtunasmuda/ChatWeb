@@ -320,10 +320,18 @@ export const useChatStore = defineStore('chat', () => {
     };
 
     const addChatRoom = (chatRoom) => {
+        console.log('🏪 Chat Store: addChatRoom called with:', chatRoom);
+        console.log('🏪 Current chat rooms count:', chatRooms.value.length);
+
         // Check if room already exists
         const existingIndex = chatRooms.value.findIndex(room => room.id === chatRoom.id);
+        console.log('🏪 Existing room index:', existingIndex);
+
         if (existingIndex === -1) {
             chatRooms.value.unshift(chatRoom);
+            console.log('✅ Chat room added! New count:', chatRooms.value.length);
+        } else {
+            console.log('⚠️ Chat room already exists, not adding');
         }
     };
 
@@ -337,6 +345,18 @@ export const useChatStore = defineStore('chat', () => {
             if (currentChatRoom.value?.id !== chatRoomId) {
                 chatRooms.value[chatRoomIndex].unread_count = (chatRooms.value[chatRoomIndex].unread_count || 0) + 1;
             }
+        }
+    };
+
+    const resetUnreadCount = (chatRoomId) => {
+        console.log('🏪 Chat Store: resetUnreadCount called for room:', chatRoomId);
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
+        if (chatRoomIndex !== -1) {
+            const oldCount = chatRooms.value[chatRoomIndex].unread_count || 0;
+            chatRooms.value[chatRoomIndex].unread_count = 0;
+            console.log(`✅ Unread count reset from ${oldCount} to 0 for room ${chatRoomId}`);
+        } else {
+            console.warn(`⚠️ Room ${chatRoomId} not found for unread count reset`);
         }
     };
 
@@ -395,6 +415,7 @@ export const useChatStore = defineStore('chat', () => {
         removeOnlineUser,
         addChatRoom,
         updateChatRoomLastMessage,
+        resetUnreadCount,
 
         // Clear functions
         clearCurrentChat,

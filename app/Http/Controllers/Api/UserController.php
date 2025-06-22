@@ -164,7 +164,7 @@ class UserController extends Controller
                             'email' => $user->email,
                             'avatar' => $user->avatar,
                             'last_seen' => $user->last_seen_at,
-                            'is_online' => $user->last_seen_at && $user->last_seen_at->diffInMinutes(now()) < 5,
+                            'is_online' => $user->last_seen_at && $user->last_seen_at->diffInMinutes(now()) < 2,
                             'created_at' => $user->created_at
                         ];
                     });
@@ -201,7 +201,18 @@ class UserController extends Controller
                     })
                     ->select(['id', 'name', 'email', 'avatar', 'last_seen_at'])
                     ->limit(10)
-                    ->get();
+                    ->get()
+                    ->map(function ($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'avatar' => $user->avatar,
+                            'last_seen' => $user->last_seen_at,
+                            'is_online' => $user->last_seen_at && $user->last_seen_at->diffInMinutes(now()) < 2,
+                            'created_at' => $user->created_at
+                        ];
+                    });
 
         return response()->json($users);
     }

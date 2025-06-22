@@ -70,7 +70,7 @@ class AdminUserController extends Controller
 
             $user->messages_count = Message::where('user_id', $user->id)->count();
             $user->last_message_at = Message::where('user_id', $user->id)->latest()->value('created_at');
-            $user->is_online = $user->last_seen_at && $user->last_seen_at >= Carbon::now()->subMinutes(5);
+            $user->is_online = $user->last_seen_at && $user->last_seen_at >= Carbon::now()->subMinutes(2);
 
             return $user;
         });

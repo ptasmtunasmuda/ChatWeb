@@ -51,6 +51,22 @@ class ChatRoomCreated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        $participants = $this->chatRoom->activeParticipants->map(function ($participant) {
+            return [
+                'id' => $participant->id,
+                'name' => $participant->name,
+                'email' => $participant->email,
+                'avatar' => $participant->avatar,
+            ];
+        });
+
+        // Log for debugging
+        \Log::info('Broadcasting ChatRoomCreated event:', [
+            'chat_room_id' => $this->chatRoom->id,
+            'participants_count' => $participants->count(),
+            'participant_ids' => $participants->pluck('id')->toArray()
+        ]);
+
         return [
             'chatRoom' => [
                 'id' => $this->chatRoom->id,
@@ -61,7 +77,8 @@ class ChatRoomCreated implements ShouldBroadcast
                 'created_at' => $this->chatRoom->created_at,
                 'updated_at' => $this->chatRoom->updated_at,
                 'creator' => $this->chatRoom->creator,
-                'participants_count' => $this->chatRoom->activeParticipants->count(),
+                'participants' => $participants,
+                'participants_count' => $participants->count(),
                 'messages_count' => $this->chatRoom->messages()->count(),
             ]
         ];

@@ -103,24 +103,30 @@ export const useUsersStore = defineStore('users', () => {
     const updateUserOnlineStatus = (userId, isOnline) => {
         const userIndex = users.value.findIndex(user => user.id === userId);
         if (userIndex !== -1) {
+            console.log(`👤 Updating user ${userId} status to ${isOnline ? 'online' : 'offline'}`);
             users.value[userIndex].is_online = isOnline;
             users.value[userIndex].last_seen = isOnline ? null : new Date().toISOString();
+        } else {
+            console.warn(`⚠️ User ${userId} not found in users list for status update`);
         }
     };
 
     const startHeartbeat = () => {
-        // Send heartbeat every 30 seconds
+        // Send heartbeat every 15 seconds for better responsiveness
+        console.log('💓 Starting heartbeat...');
         heartbeatInterval.value = setInterval(async () => {
             try {
-                await axios.post('/api/user/heartbeat');
+                const response = await axios.post('/api/user/heartbeat');
+                console.log('💓 Heartbeat sent successfully:', response.data);
             } catch (error) {
-                console.error('Heartbeat failed:', error);
+                console.error('💔 Heartbeat failed:', error);
             }
-        }, 30000); // 30 seconds
+        }, 15000); // 15 seconds
     };
 
     const stopHeartbeat = () => {
         if (heartbeatInterval.value) {
+            console.log('💔 Stopping heartbeat...');
             clearInterval(heartbeatInterval.value);
             heartbeatInterval.value = null;
         }
@@ -131,8 +137,12 @@ export const useUsersStore = defineStore('users', () => {
 
         // Listen for user status updates
         window.Echo.channel('users-status')
-            .listen('.user.status.updated', (e) => {
+            .listen('user.status.updated', (e) => {
+                console.log('👤 User status update received:', e);
                 updateUserOnlineStatus(e.user_id, e.is_online);
+            })
+            .error((error) => {
+                console.error('❌ Error on users-status channel:', error);
             });
     };
 
