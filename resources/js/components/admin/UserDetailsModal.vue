@@ -48,9 +48,9 @@
               <div class="text-2xl font-bold text-green-600">{{ user.messages_count || 0 }}</div>
               <div class="text-sm text-green-600">Messages</div>
             </div>
-            <div class="bg-purple-50 p-4 rounded-lg">
-              <div class="text-2xl font-bold text-purple-600">{{ formatDate(user.last_seen_at) }}</div>
-              <div class="text-sm text-purple-600">Last Seen</div>
+            <div class="bg-blue-50 p-4 rounded-lg">
+              <div class="text-2xl font-bold text-blue-600">{{ formatDate(user.last_seen_at) }}</div>
+              <div class="text-sm text-blue-600">Last Seen</div>
             </div>
             <div class="bg-orange-50 p-4 rounded-lg">
               <div class="text-2xl font-bold text-orange-600">{{ formatDate(user.created_at) }}</div>

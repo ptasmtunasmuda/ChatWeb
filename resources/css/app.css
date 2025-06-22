@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Built-in plugins for Tailwind v4 */
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+
 /* Source directives for Tailwind v4 */
 @source "../**/*.blade.php";
 @source "../**/*.vue";
@@ -10,18 +14,18 @@
 
 /* Tailwind v4 Theme Configuration */
 @theme {
-    /* Custom Colors */
-    --color-primary-50: #faf7ff;
-    --color-primary-100: #f3edff;
-    --color-primary-200: #e9ddff;
-    --color-primary-300: #d7c1ff;
-    --color-primary-400: #bf97ff;
-    --color-primary-500: #a855f7;
-    --color-primary-600: #9333ea;
-    --color-primary-700: #7c3aed;
-    --color-primary-800: #6b21a8;
-    --color-primary-900: #581c87;
-    --color-primary-950: #3b0764;
+    /* Custom Colors - Blue as Primary */
+    --color-primary-50: #eff6ff;
+    --color-primary-100: #dbeafe;
+    --color-primary-200: #bfdbfe;
+    --color-primary-300: #93c5fd;
+    --color-primary-400: #60a5fa;
+    --color-primary-500: #3b82f6;
+    --color-primary-600: #2563eb;
+    --color-primary-700: #1d4ed8;
+    --color-primary-800: #1e40af;
+    --color-primary-900: #1e3a8a;
+    --color-primary-950: #172554;
 
     --color-secondary-50: #f8fafc;
     --color-secondary-100: #f1f5f9;
@@ -34,16 +38,16 @@
     --color-secondary-800: #1e293b;
     --color-secondary-900: #0f172a;
 
-    --color-accent-50: #fdf4ff;
-    --color-accent-100: #fae8ff;
-    --color-accent-200: #f5d0fe;
-    --color-accent-300: #f0abfc;
-    --color-accent-400: #e879f9;
-    --color-accent-500: #d946ef;
-    --color-accent-600: #c026d3;
-    --color-accent-700: #a21caf;
-    --color-accent-800: #86198f;
-    --color-accent-900: #701a75;
+    --color-accent-50: #ecfeff;
+    --color-accent-100: #cffafe;
+    --color-accent-200: #a5f3fc;
+    --color-accent-300: #67e8f9;
+    --color-accent-400: #22d3ee;
+    --color-accent-500: #06b6d4;
+    --color-accent-600: #0891b2;
+    --color-accent-700: #0e7490;
+    --color-accent-800: #155e75;
+    --color-accent-900: #164e63;
 
     --color-success-50: #f0fdf4;
     --color-success-100: #dcfce7;
@@ -97,11 +101,11 @@
     --animate-glow: glow 2s ease-in-out infinite alternate;
 
     /* Box Shadows */
-    --shadow-purple: 0 4px 14px 0 rgba(168, 85, 247, 0.25);
-    --shadow-purple-lg: 0 10px 25px -3px rgba(168, 85, 247, 0.3);
-    --shadow-inner-purple: inset 0 2px 4px 0 rgba(168, 85, 247, 0.1);
-    --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.5);
-    --shadow-glow-lg: 0 0 40px rgba(168, 85, 247, 0.6);
+    --shadow-blue: 0 4px 14px 0 rgba(59, 130, 246, 0.25);
+    --shadow-blue-lg: 0 10px 25px -3px rgba(59, 130, 246, 0.3);
+    --shadow-inner-blue: inset 0 2px 4px 0 rgba(59, 130, 246, 0.1);
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.5);
+    --shadow-glow-lg: 0 0 40px rgba(59, 130, 246, 0.6);
 }
 
 /* Keyframes for Animations */
@@ -158,13 +162,13 @@
 }
 
 @keyframes glow {
-    0% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.5); }
-    100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.8); }
+    0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+    100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
 }
 
 /* Custom CSS Variables */
 :root {
-    --primary-gradient: linear-gradient(135deg, #a855f7 0%, #d946ef 100%);
+    --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
     --secondary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
@@ -193,12 +197,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #a855f7, #d946ef);
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #9333ea, #c026d3);
+    background: linear-gradient(135deg, #2563eb, #0891b2);
 }
 
 /* Glass Morphism Effect */
@@ -217,7 +221,7 @@ body {
 
 /* Gradient Text */
 .gradient-text {
-    background: linear-gradient(135deg, #a855f7, #d946ef);
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -225,7 +229,7 @@ body {
 
 /* Button Styles */
 .btn-primary {
-    @apply bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold py-3 px-6 rounded-xl shadow-purple hover:shadow-purple-lg transform hover:scale-105 transition-all duration-300 ease-out;
+    @apply bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold py-3 px-6 rounded-xl shadow-blue hover:shadow-blue-lg transform hover:scale-105 transition-all duration-300 ease-out;
 }
 
 .btn-secondary {
@@ -246,8 +250,8 @@ body {
     @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6 transition-all duration-300 hover:shadow-xl hover:scale-[1.02];
 }
 
-.card-purple {
-    @apply bg-gradient-to-br from-primary-500/10 to-accent-500/10 backdrop-blur-sm rounded-2xl shadow-purple border border-primary-200/50 p-6 transition-all duration-300 hover:shadow-purple-lg hover:scale-[1.02];
+.card-blue {
+    @apply bg-gradient-to-br from-primary-500/10 to-accent-500/10 backdrop-blur-sm rounded-2xl shadow-blue border border-primary-200/50 p-6 transition-all duration-300 hover:shadow-blue-lg hover:scale-[1.02];
 }
 
 /* Animation Classes */
