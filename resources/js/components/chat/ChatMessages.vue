@@ -29,7 +29,7 @@
       <!-- Date divider -->
       <div class="text-center">
         <div class="inline-block bg-white px-3 py-1 rounded-lg text-sm text-gray-500 border border-gray-200">
-          Today, {{ formatTime(messages[0]?.created_at) }}
+          {{ formatDateDivider(messages[0]?.created_at) }}
         </div>
       </div>
 
@@ -236,18 +236,60 @@ const messageToDelete = ref(null);
 
 // Methods
 const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
+  if (!timestamp) return '';
+
+  // Handle different timestamp formats
+  let date;
+  if (typeof timestamp === 'string') {
+    // Laravel sends ISO string like "2024-06-22T06:12:35.000000Z"
+    date = new Date(timestamp);
+  } else {
+    date = new Date(timestamp);
+  }
+
+  // Validate date
+  if (isNaN(date.getTime())) {
+    console.error('Invalid timestamp:', timestamp);
+    return 'Invalid date';
+  }
+
   const now = new Date();
-  const diffInMinutes = (now - date) / (1000 * 60);
+  const diffInMilliseconds = now.getTime() - date.getTime();
+  const diffInMinutes = diffInMilliseconds / (1000 * 60);
+  const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
 
   if (diffInMinutes < 1) {
     return 'Just now';
   } else if (diffInMinutes < 60) {
     return `${Math.floor(diffInMinutes)}m ago`;
-  } else if (diffInMinutes < 1440) {
-    return `${Math.floor(diffInMinutes / 60)}h ago`;
+  } else if (diffInHours < 24) {
+    return `${Math.floor(diffInHours)}h ago`;
+  } else if (diffInHours < 168) { // 7 days
+    return `${Math.floor(diffInHours / 24)}d ago`;
   } else {
     return date.toLocaleDateString();
+  }
+};
+
+const formatDateDivider = (timestamp) => {
+  if (!timestamp) return 'Today';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) {
+    return 'Today';
+  } else if (diffInDays === 1) {
+    return 'Yesterday';
+  } else if (diffInDays < 7) {
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  } else {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
   }
 };
 

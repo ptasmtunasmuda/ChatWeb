@@ -8,17 +8,17 @@
           <div class="flex items-center">
             <!-- User Avatar -->
             <div class="relative">
-              <div 
-                v-if="authStore.user?.avatar" 
+              <div
+                v-if="authStore.user?.avatar"
                 class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
               >
-                <img 
-                  :src="authStore.user.avatar" 
+                <img
+                  :src="authStore.user.avatar"
                   :alt="authStore.user?.name"
                   class="w-full h-full object-cover"
                 />
               </div>
-              <div 
+              <div
                 v-else
                 class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
               >
@@ -100,8 +100,8 @@
                 <div class="border-t border-gray-100 my-2"></div>
 
                 <!-- Sign Out -->
-                <button 
-                  class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-left" 
+                <button
+                  class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-left"
                   @click="handleLogout"
                 >
                   <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
@@ -225,23 +225,23 @@
             >
               <div class="relative">
                 <!-- Chat Avatar -->
-                <div 
-                  v-if="getChatAvatar(room)" 
+                <div
+                  v-if="getChatAvatar(room)"
                   class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
                 >
-                  <img 
-                    :src="getChatAvatar(room)" 
+                  <img
+                    :src="getChatAvatar(room)"
                     :alt="getChatDisplayName(room)"
                     class="w-full h-full object-cover"
                   />
                 </div>
-                <div 
+                <div
                   v-else
                   class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
                 >
                   {{ getChatAvatarInitial(room) }}
                 </div>
-                
+
                 <!-- Online indicator for private chats -->
                 <div
                   v-if="isOtherParticipantOnline(room)"
@@ -338,23 +338,23 @@
               </button>
               <div class="relative">
                 <!-- Chat Header Avatar -->
-                <div 
-                  v-if="getChatAvatar(selectedChatRoom)" 
+                <div
+                  v-if="getChatAvatar(selectedChatRoom)"
                   class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
                 >
-                  <img 
-                    :src="getChatAvatar(selectedChatRoom)" 
+                  <img
+                    :src="getChatAvatar(selectedChatRoom)"
                     :alt="getChatDisplayName(selectedChatRoom)"
                     class="w-full h-full object-cover"
                   />
                 </div>
-                <div 
+                <div
                   v-else
                   class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
                 >
                   {{ getChatAvatarInitial(selectedChatRoom) }}
                 </div>
-                
+
                 <div
                   v-if="isOtherParticipantOnline(selectedChatRoom)"
                   class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
@@ -575,19 +575,19 @@ const getChatStatusText = (room) => {
 // Helper function to get display text for latest message
 const getLatestMessageDisplay = (message) => {
   if (!message) return 'No messages yet';
-  
+
   if (message.is_deleted) {
     return '🗑️ This message was deleted';
   }
-  
+
   // Check if message was edited (compare updated_at with created_at)
-  const wasEdited = message.updated_at && message.created_at && 
+  const wasEdited = message.updated_at && message.created_at &&
                    new Date(message.updated_at).getTime() > new Date(message.created_at).getTime();
-  
+
   if (wasEdited) {
     return `📝 ${message.content}`;
   }
-  
+
   return message.content || 'No messages yet';
 };
 
@@ -604,14 +604,36 @@ const filteredChatRooms = computed(() => {
 
 // Methods
 const formatTime = (timestamp) => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInHours = (now - date) / (1000 * 60 * 60);
+  if (!timestamp) return '';
 
-  if (diffInHours < 1) {
+  // Handle different timestamp formats
+  let date;
+  if (typeof timestamp === 'string') {
+    // Laravel sends ISO string like "2024-06-22T06:12:35.000000Z"
+    date = new Date(timestamp);
+  } else {
+    date = new Date(timestamp);
+  }
+
+  // Validate date
+  if (isNaN(date.getTime())) {
+    console.error('Invalid timestamp:', timestamp);
+    return 'Invalid date';
+  }
+
+  const now = new Date();
+  const diffInMilliseconds = now.getTime() - date.getTime();
+  const diffInMinutes = diffInMilliseconds / (1000 * 60);
+  const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
+
+  if (diffInMinutes < 1) {
     return 'Just now';
+  } else if (diffInMinutes < 60) {
+    return `${Math.floor(diffInMinutes)}m ago`;
   } else if (diffInHours < 24) {
     return `${Math.floor(diffInHours)}h ago`;
+  } else if (diffInHours < 168) { // 7 days
+    return `${Math.floor(diffInHours / 24)}d ago`;
   } else {
     return date.toLocaleDateString();
   }
@@ -657,7 +679,7 @@ const handleSendMessage = async (messageData) => {
 
   if (result.success) {
     console.log('✅ Message sent successfully:', result);
-    
+
     // Show conversion notice if files were converted
     if (result.conversion_notice) {
       showNotification('warning', 'File Converted', result.conversion_notice.message);
@@ -809,7 +831,7 @@ const initializeChat = async () => {
     window.Echo.channel('user-updates')
       .listen('.user.avatar.updated', (e) => {
         console.log('🖼️ Chat: User avatar update received:', e);
-        
+
         // Update in chat store with fallback
         try {
           if (typeof chatStore.updateUserAvatarInChats === 'function') {
@@ -820,10 +842,10 @@ const initializeChat = async () => {
             chatStore.handleUserAvatarUpdate(e.user);
           } else {
             console.warn('⚠️ Avatar update function not available, using manual update');
-            
+
             // Manual update as fallback
             const userData = e.user;
-            
+
             // Update chat rooms participants manually
             chatStore.chatRooms.forEach((room, roomIndex) => {
               if (room.participants) {
@@ -838,7 +860,7 @@ const initializeChat = async () => {
                 });
               }
             });
-            
+
             // Update current chat participants manually
             if (chatStore.participants) {
               const participantIndex = chatStore.participants.findIndex(p => p.id === userData.id);
