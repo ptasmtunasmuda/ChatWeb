@@ -212,7 +212,7 @@ const handleRegister = async () => {
 
     if (result.success) {
       notificationStore.success('Account Created!', 'Welcome to ChatWeb! You can now start chatting.');
-      router.push('/dashboard');
+      router.push('/chat');
     } else {
       notificationStore.error('Registration Failed', result.message);
     }

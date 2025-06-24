@@ -155,7 +155,8 @@ const handleLogin = async () => {
 
     if (result.success) {
       notificationStore.success('Welcome Back!', 'You have been successfully logged in.');
-      router.push('/dashboard');
+      // Semua user (admin dan user biasa) ke chat
+      router.push('/chat');
     } else {
       notificationStore.error('Login Failed', result.message);
     }

@@ -4,7 +4,6 @@ import { useAuthStore } from '../stores/auth';
 // Import components
 import Login from '../components/auth/Login.vue';
 import Register from '../components/auth/Register.vue';
-import Dashboard from '../components/Dashboard.vue';
 import Chat from '../components/chat/Chat.vue';
 import AdminDashboard from '../components/admin/AdminDashboard.vue';
 import AdminUsers from '../components/admin/AdminUsers.vue';
@@ -13,7 +12,7 @@ import AdminChats from '../components/admin/AdminChats.vue';
 const routes = [
     {
         path: '/',
-        redirect: '/chat'  // Default ke chat, nanti diatur di navigation guard
+        redirect: '/chat'
     },
     {
         path: '/login',
@@ -26,12 +25,6 @@ const routes = [
         name: 'Register',
         component: Register,
         meta: { requiresGuest: true }
-    },
-    {
-        path: '/dashboard',
-        name: 'Dashboard',
-        component: Dashboard,
-        meta: { requiresAuth: true }
     },
     {
         path: '/chat/:id?',
@@ -78,21 +71,13 @@ router.beforeEach((to, from, next) => {
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
         next('/login');
     } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-        // Admin tetap ke dashboard, user biasa ke chat
-        if (authStore.isAdmin) {
-            next('/dashboard');
-        } else {
-            next('/chat');
-        }
+        // Semua user (admin dan user biasa) ke chat setelah login
+        next('/chat');
     } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
         next('/chat');
     } else if (to.path === '/' && authStore.isAuthenticated) {
-        // Handle redirect dari root path berdasarkan role
-        if (authStore.isAdmin) {
-            next('/dashboard');
-        } else {
-            next('/chat');
-        }
+        // Handle redirect dari root path - semua ke chat
+        next('/chat');
     } else {
         next();
     }
