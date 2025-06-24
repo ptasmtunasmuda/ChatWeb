@@ -392,6 +392,7 @@
         <!-- Messages Area - Scrollable -->
         <div class="flex-1 min-h-0">
           <ChatMessages
+            ref="chatMessagesRef"
             :messages="sortedMessages"
             :current-user="authStore.user"
             :loading="chatStore.messagesLoading"
@@ -452,6 +453,7 @@ import { useAuthStore } from '../../stores/auth';
 import { useChatStore } from '../../stores/chat';
 import { useUsersStore } from '../../stores/users';
 import { useNotificationStore } from '../../stores/notifications';
+import { useTimestamp } from '../../composables/useTimestamp';
 import ChatMessages from './ChatMessages.vue';
 import ChatInput from './ChatInput.vue';
 import CreateRoomModal from './CreateRoomModal.vue';
@@ -464,6 +466,7 @@ const authStore = useAuthStore();
 const chatStore = useChatStore();
 const usersStore = useUsersStore();
 const notificationStore = useNotificationStore();
+const { formatTime, formatLastSeen } = useTimestamp();
 
 const searchQuery = ref('');
 const showCreateRoomModal = ref(false);
@@ -471,6 +474,7 @@ const isShowChatMenu = ref(false);
 const dropdownOpen = ref(false);
 const selectedChatRoom = ref(null);
 const currentView = ref('chats'); // 'chats', 'calls', 'contacts', 'notifications'
+const chatMessagesRef = ref(null);
 
 // Notification state
 const notification = ref({
@@ -537,23 +541,8 @@ const isOtherParticipantOnline = (room) => {
 };
 
 // Helper function to format last seen time
-const formatLastSeen = (timestamp) => {
-  if (!timestamp) return 'Long time ago';
-
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInMinutes = (now - date) / (1000 * 60);
-
-  if (diffInMinutes < 1) {
-    return 'Just now';
-  } else if (diffInMinutes < 60) {
-    return `${Math.floor(diffInMinutes)} minutes ago`;
-  } else if (diffInMinutes < 1440) {
-    return `${Math.floor(diffInMinutes / 60)} hours ago`;
-  } else {
-    const days = Math.floor(diffInMinutes / 1440);
-    return `${days} day${days > 1 ? 's' : ''} ago`;
-  }
+const formatLastSeenTime = (timestamp) => {
+  return formatLastSeen(timestamp);
 };
 
 // Helper function to get status text for chat header
@@ -569,7 +558,7 @@ const getChatStatusText = (room) => {
   }
 
   // Show last seen time
-  return `Last seen ${formatLastSeen(otherParticipant.last_seen)}`;
+  return `Last seen ${formatLastSeenTime(otherParticipant.last_seen)}`;
 };
 
 // Helper function to get display text for latest message
@@ -603,42 +592,6 @@ const filteredChatRooms = computed(() => {
 });
 
 // Methods
-const formatTime = (timestamp) => {
-  if (!timestamp) return '';
-
-  // Handle different timestamp formats
-  let date;
-  if (typeof timestamp === 'string') {
-    // Laravel sends ISO string like "2024-06-22T06:12:35.000000Z"
-    date = new Date(timestamp);
-  } else {
-    date = new Date(timestamp);
-  }
-
-  // Validate date
-  if (isNaN(date.getTime())) {
-    console.error('Invalid timestamp:', timestamp);
-    return 'Invalid date';
-  }
-
-  const now = new Date();
-  const diffInMilliseconds = now.getTime() - date.getTime();
-  const diffInMinutes = diffInMilliseconds / (1000 * 60);
-  const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
-
-  if (diffInMinutes < 1) {
-    return 'Just now';
-  } else if (diffInMinutes < 60) {
-    return `${Math.floor(diffInMinutes)}m ago`;
-  } else if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h ago`;
-  } else if (diffInHours < 168) { // 7 days
-    return `${Math.floor(diffInHours / 24)}d ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
-};
-
 const selectChatRoom = async (room) => {
   if (currentChatRoom.value?.id === room.id) return;
 
@@ -657,6 +610,14 @@ const selectChatRoom = async (room) => {
       // Reset unread count when messages are successfully fetched and marked as read
       console.log('📖 Resetting unread count for room:', room.id);
       chatStore.resetUnreadCount(room.id);
+      
+      // Scroll to bottom after messages are loaded
+      setTimeout(() => {
+        if (chatMessagesRef.value && chatMessagesRef.value.scrollToBottom) {
+          console.log('🔽 Triggering scroll to bottom after room selection');
+          chatMessagesRef.value.scrollToBottom(true);
+        }
+      }, 300);
     }
 
     // Update URL
@@ -684,6 +645,14 @@ const handleSendMessage = async (messageData) => {
     if (result.conversion_notice) {
       showNotification('warning', 'File Converted', result.conversion_notice.message);
     }
+    
+    // Scroll to bottom after sending message
+    setTimeout(() => {
+      if (chatMessagesRef.value && chatMessagesRef.value.scrollToBottom) {
+        console.log('🔽 Scrolling to bottom after sending message');
+        chatMessagesRef.value.scrollToBottom(true);
+      }
+    }, 100);
   } else {
     console.error('❌ Failed to send message:', result);
     showNotification('error', 'Send Failed', result.message);
@@ -726,6 +695,7 @@ const handleDeleteMessage = async (messageId) => {
   }
 };
 
+// Edit message state
 // Edit message state
 const editingMessage = ref(null);
 
@@ -1196,6 +1166,23 @@ const handleEscKey = (event) => {
     dropdownOpen.value = false;
   }
 };
+
+// Watch for route changes to handle direct navigation
+watch(() => route.params.id, async (newRoomId) => {
+  if (newRoomId) {
+    const room = chatStore.chatRooms.find(r => r.id == newRoomId);
+    if (room) {
+      await selectChatRoom(room);
+      // Extra scroll after route change
+      setTimeout(() => {
+        if (chatMessagesRef.value && chatMessagesRef.value.scrollToBottom) {
+          console.log('🔽 Scrolling to bottom after route change');
+          chatMessagesRef.value.scrollToBottom(true);
+        }
+      }, 500);
+    }
+  }
+});
 
 // Watch dropdown state to add/remove event listeners
 watch(dropdownOpen, (isOpen) => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full overflow-y-auto bg-gray-50 p-4 space-y-4" ref="messagesContainer">
+  <div class="h-full overflow-y-auto bg-gray-50 p-4 space-y-4 scroll-smooth" ref="messagesContainer">
     <!-- Loading -->
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 5" :key="i" class="animate-pulse">
@@ -206,6 +206,7 @@
 
 <script setup>
 import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue';
+import { useTimestamp } from '../../composables/useTimestamp';
 import FilePreview from './attachments/FilePreview.vue';
 import axios from 'axios';
 
@@ -234,69 +235,37 @@ const messagesContainer = ref(null);
 const showDeleteConfirm = ref(false);
 const messageToDelete = ref(null);
 
-// Methods
-const formatTime = (timestamp) => {
-  if (!timestamp) return '';
+// Use timestamp composable for real-time updates
+const { formatTime, formatDateDivider } = useTimestamp();
 
-  // Handle different timestamp formats
-  let date;
-  if (typeof timestamp === 'string') {
-    // Laravel sends ISO string like "2024-06-22T06:12:35.000000Z"
-    date = new Date(timestamp);
-  } else {
-    date = new Date(timestamp);
-  }
-
-  // Validate date
-  if (isNaN(date.getTime())) {
-    console.error('Invalid timestamp:', timestamp);
-    return 'Invalid date';
-  }
-
-  const now = new Date();
-  const diffInMilliseconds = now.getTime() - date.getTime();
-  const diffInMinutes = diffInMilliseconds / (1000 * 60);
-  const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
-
-  if (diffInMinutes < 1) {
-    return 'Just now';
-  } else if (diffInMinutes < 60) {
-    return `${Math.floor(diffInMinutes)}m ago`;
-  } else if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h ago`;
-  } else if (diffInHours < 168) { // 7 days
-    return `${Math.floor(diffInHours / 24)}d ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
-};
-
-const formatDateDivider = (timestamp) => {
-  if (!timestamp) return 'Today';
-
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-
-  if (diffInDays === 0) {
-    return 'Today';
-  } else if (diffInDays === 1) {
-    return 'Yesterday';
-  } else if (diffInDays < 7) {
-    return date.toLocaleDateString('en-US', { weekday: 'long' });
-  } else {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
-  }
-};
-
-const scrollToBottom = () => {
+const scrollToBottom = (force = false) => {
   nextTick(() => {
     if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      const container = messagesContainer.value;
+      
+      console.log('🔽 Scrolling to bottom:', {
+        scrollHeight: container.scrollHeight,
+        clientHeight: container.clientHeight,
+        currentScrollTop: container.scrollTop,
+        force: force
+      });
+      
+      // Force scroll to bottom
+      container.scrollTop = container.scrollHeight;
+      
+      // Double-check after a small delay (for images/content that might load)
+      if (force) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+          console.log('🔽 Force scroll check 1:', container.scrollTop);
+        }, 50);
+        
+        // Triple-check for stubborn cases
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+          console.log('🔽 Force scroll check 2:', container.scrollTop);
+        }, 200);
+      }
     }
   });
 };
@@ -414,13 +383,35 @@ watch(() => props.messages.length, () => {
   scrollToBottom();
 });
 
+// Watch for messages content change (when switching rooms)
+watch(() => props.messages, (newMessages) => {
+  if (newMessages && newMessages.length > 0) {
+    scrollToBottom(true); // Force scroll when switching rooms
+  }
+}, { immediate: true, deep: true });
+
+// Watch for loading state to scroll when messages finish loading
+watch(() => props.loading, (isLoading) => {
+  if (!isLoading && props.messages.length > 0) {
+    // Small delay to ensure DOM is updated
+    setTimeout(() => {
+      scrollToBottom(true); // Force scroll after loading
+    }, 100);
+  }
+});
+
 onMounted(() => {
-  scrollToBottom();
+  scrollToBottom(true); // Force scroll on mount
 });
 
 onUnmounted(() => {
   // Cleanup keyboard event listener if modal is open
   document.removeEventListener('keydown', handleKeydown);
+});
+
+// Expose scrollToBottom function to parent component
+defineExpose({
+  scrollToBottom
 });
 </script>
 
