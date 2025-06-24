@@ -41,8 +41,31 @@
       >
         <!-- Avatar -->
         <div class="flex-shrink-0">
-          <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-            {{ message.user.name.charAt(0).toUpperCase() }}
+          <div class="relative">
+            <!-- User Avatar with Image -->
+            <div
+              v-if="message.user.avatar"
+              class="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm"
+            >
+              <img
+                :src="message.user.avatar"
+                :alt="message.user.name"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <!-- Fallback Avatar with Initials -->
+            <div
+              v-else
+              class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+            >
+              {{ message.user.name.charAt(0).toUpperCase() }}
+            </div>
+
+            <!-- Online Status Indicator (only for other users) -->
+            <div
+              v-if="currentUser && message.user.id !== currentUser.id && message.user.is_online"
+              class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+            ></div>
           </div>
         </div>
 
@@ -205,7 +228,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['edit-message', 'delete-message', 'load-more', 'start-edit']);
+const emit = defineEmits(['edit-message', 'delete-message', 'load-more', 'start-edit', 'download-error']);
 
 const messagesContainer = ref(null);
 const showDeleteConfirm = ref(false);
@@ -258,58 +281,54 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const downloadFile = async (message, fileIndex) => {
+const downloadFile = (message, fileIndex) => {
   try {
-    const chatRoomId = message.chat_room_id;
-    const messageId = message.id;
-    
     // Get file info from attachment_info
     const attachments = message.attachment_info?.files || [];
     if (!attachments[fileIndex]) {
       console.error('File not found at index:', fileIndex);
-      emit('download-error', 'File not found');
+      alert('File not found');
       return;
     }
-    
+
     const file = attachments[fileIndex];
-    
-    // Create download URL using fileIndex since we store files in attachment_info array
-    const downloadUrl = `/api/chat-rooms/${chatRoomId}/messages/${messageId}/files/${fileIndex}`;
-    
-    // Get auth token
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      console.error('No auth token found');
-      emit('download-error', 'Authentication required');
+    console.log('Downloading file:', file);
+
+    // Use direct URL download (simpler approach)
+    let downloadUrl = '';
+
+    // Try different URL sources
+    if (file.url) {
+      downloadUrl = file.url;
+    } else if (file.path) {
+      downloadUrl = `/storage/${file.path}`;
+    } else if (file.file_path) {
+      downloadUrl = file.file_path;
+    } else if (file.original_name) {
+      // Fallback: construct URL based on message and file info
+      downloadUrl = `/storage/chat-files/${message.id}/${file.original_name}`;
+    } else {
+      console.error('No valid download URL found for file:', file);
+      alert('Unable to download file - no valid URL found');
       return;
     }
-    
-    // Use axios to download with authentication
-    const response = await axios.get(downloadUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-      responseType: 'blob'
-    });
-    
-    // Create blob URL and trigger download
-    const blob = new Blob([response.data]);
-    const url = window.URL.createObjectURL(blob);
+
+    console.log('Downloading file from URL:', downloadUrl);
+
+    // Create download link and trigger download
     const link = document.createElement('a');
-    link.href = url;
-    link.download = file.original_name || `file_${fileIndex}`;
+    link.href = downloadUrl;
+    link.download = file.original_name || file.name || `file_${fileIndex}`;
+    link.target = '_blank'; // Open in new tab as fallback
     link.style.display = 'none';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    // Clean up blob URL
-    window.URL.revokeObjectURL(url);
-    
+
   } catch (error) {
     console.error('Download error:', error);
-    emit('download-error', error.response?.data?.message || 'Failed to download file');
+    alert('Failed to download file: ' + error.message);
   }
 };
 
@@ -345,6 +364,8 @@ const handleKeydown = (event) => {
     confirmDelete();
   }
 };
+
+
 
 // Watch for new messages and scroll to bottom
 watch(() => props.messages.length, () => {
