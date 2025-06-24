@@ -20,6 +20,7 @@ class Message extends Model implements HasMedia
         'reply_to_message_id',
         'is_edited',
         'edited_at',
+        'attachment_info',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class Message extends Model implements HasMedia
         return [
             'is_edited' => 'boolean',
             'edited_at' => 'datetime',
+            'attachment_info' => 'array',
         ];
     }
 

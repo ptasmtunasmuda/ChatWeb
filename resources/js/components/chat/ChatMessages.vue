@@ -75,21 +75,17 @@
             <div v-else>
               <!-- Regular message display -->
               <div>
-                <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+                <p v-if="message.content" class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
 
                 <!-- File attachments -->
-                <div v-if="message.attachments && message.attachments.length > 0" class="mt-2 space-y-2">
-                  <div
-                    v-for="attachment in message.attachments"
-                    :key="attachment.id"
-                    class="flex items-center space-x-2 p-2 bg-white/50 rounded-lg"
-                  >
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                    </svg>
-                    <span class="text-sm text-gray-700">{{ attachment.name }}</span>
-                    <button class="text-xs text-blue-600 hover:text-blue-700">Download</button>
-                  </div>
+                <div v-if="hasAttachments(message)" class="mt-3 space-y-3">
+                  <FilePreview
+                    v-for="(file, index) in getAttachments(message)"
+                    :key="index"
+                    :file="file"
+                    :is-sent-message="currentUser && message.user.id === currentUser.id"
+                    @download="downloadFile(message, index)"
+                  />
                 </div>
               </div>
             </div>
@@ -187,6 +183,8 @@
 
 <script setup>
 import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue';
+import FilePreview from './attachments/FilePreview.vue';
+import axios from 'axios';
 
 const props = defineProps({
   messages: {
@@ -241,6 +239,78 @@ const scrollToBottom = () => {
 const startEdit = (message) => {
   // Emit to parent to handle edit in chat input
   emit('start-edit', message);
+};
+
+// File attachment methods
+const hasAttachments = (message) => {
+  return message.attachment_info && message.attachment_info.files && message.attachment_info.files.length > 0;
+};
+
+const getAttachments = (message) => {
+  return message.attachment_info?.files || [];
+};
+
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const downloadFile = async (message, fileIndex) => {
+  try {
+    const chatRoomId = message.chat_room_id;
+    const messageId = message.id;
+    
+    // Get file info from attachment_info
+    const attachments = message.attachment_info?.files || [];
+    if (!attachments[fileIndex]) {
+      console.error('File not found at index:', fileIndex);
+      emit('download-error', 'File not found');
+      return;
+    }
+    
+    const file = attachments[fileIndex];
+    
+    // Create download URL using fileIndex since we store files in attachment_info array
+    const downloadUrl = `/api/chat-rooms/${chatRoomId}/messages/${messageId}/files/${fileIndex}`;
+    
+    // Get auth token
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      console.error('No auth token found');
+      emit('download-error', 'Authentication required');
+      return;
+    }
+    
+    // Use axios to download with authentication
+    const response = await axios.get(downloadUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      responseType: 'blob'
+    });
+    
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.original_name || `file_${fileIndex}`;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up blob URL
+    window.URL.revokeObjectURL(url);
+    
+  } catch (error) {
+    console.error('Download error:', error);
+    emit('download-error', error.response?.data?.message || 'Failed to download file');
+  }
 };
 
 const deleteMessage = (messageId) => {

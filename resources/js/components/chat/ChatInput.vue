@@ -255,7 +255,8 @@ const sendMessage = async () => {
 
   const messageContent = message.value.trim();
 
-  if (!messageContent) return;
+  // Allow sending if there's content OR files attached
+  if (!messageContent && selectedFiles.value.length === 0) return;
 
   sending.value = true;
   error.value = '';

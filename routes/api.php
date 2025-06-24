@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ChatRoomController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\FileController;
+use App\Http\Controllers\Api\FileDownloadController;
 use App\Http\Controllers\Api\TypingController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\ChatController as AdminChatController;
@@ -79,9 +80,9 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
 
     // File routes
     Route::post('chat-rooms/{chatRoomId}/files', [FileController::class, 'upload']);
-    Route::get('chat-rooms/{chatRoomId}/messages/{messageId}/files/{mediaId}', [FileController::class, 'download']);
-    Route::get('chat-rooms/{chatRoomId}/messages/{messageId}/files/{mediaId}/info', [FileController::class, 'info']);
-    Route::delete('chat-rooms/{chatRoomId}/messages/{messageId}/files/{mediaId}', [FileController::class, 'delete']);
+    Route::get('chat-rooms/{chatRoomId}/messages/{messageId}/files/{fileIndex}', [FileController::class, 'download'])->name('file.download');
+    Route::get('chat-rooms/{chatRoomId}/messages/{messageId}/files/{fileIndex}/info', [FileController::class, 'info']);
+    Route::delete('chat-rooms/{chatRoomId}/messages/{messageId}/files/{fileIndex}', [FileController::class, 'delete']);
 
     // Typing indicator
     Route::post('chat-rooms/{chatRoomId}/typing', [TypingController::class, 'typing']);

@@ -118,11 +118,32 @@ export const useChatStore = defineStore('chat', () => {
             console.log('📍 Chat Room ID:', chatRoomId);
             console.log('📨 Message Data:', messageData);
 
-            const response = await axios.post(`/api/chat-rooms/${chatRoomId}/messages`, messageData);
-            const newMessage = response.data.data;
+            let response;
+            let config = {};
 
+            // Handle FormData for file uploads
+            if (messageData.formData) {
+                config.headers = {
+                    'Content-Type': 'multipart/form-data'
+                };
+                response = await axios.post(`/api/chat-rooms/${chatRoomId}/messages`, messageData.formData, config);
+            } else {
+                response = await axios.post(`/api/chat-rooms/${chatRoomId}/messages`, messageData);
+            }
+
+            const newMessage = response.data.data;
             console.log('✅ Chat Store: Message sent successfully');
             console.log('📨 New Message:', newMessage);
+
+            // Check for conversion notice
+            if (response.data.conversion_notice) {
+                console.log('🔄 File conversion notice:', response.data.conversion_notice);
+                return { 
+                    success: true, 
+                    message: newMessage,
+                    conversion_notice: response.data.conversion_notice
+                };
+            }
 
             // Don't add message to local store here - real-time event will handle it
             console.log('⏳ Chat Store: Waiting for real-time event to add message');

@@ -424,6 +424,18 @@
       @created="handleRoomCreated"
     />
 
+    <!-- Notifications -->
+    <Notification
+      v-if="notification.show"
+      :show="notification.show"
+      :type="notification.type"
+      :title="notification.title"
+      :message="notification.message"
+      :duration="notification.duration"
+      :auto-close="notification.autoClose"
+      @close="closeNotification"
+    />
+
     <!-- Mobile Overlay -->
     <div
       v-if="isShowChatMenu"
@@ -444,6 +456,7 @@ import ChatMessages from './ChatMessages.vue';
 import ChatInput from './ChatInput.vue';
 import CreateRoomModal from './CreateRoomModal.vue';
 import Contacts from './Contacts.vue';
+import Notification from '../common/Notification.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -458,6 +471,16 @@ const isShowChatMenu = ref(false);
 const dropdownOpen = ref(false);
 const selectedChatRoom = ref(null);
 const currentView = ref('chats'); // 'chats', 'calls', 'contacts', 'notifications'
+
+// Notification state
+const notification = ref({
+  show: false,
+  type: 'info',
+  title: '',
+  message: '',
+  duration: 5000,
+  autoClose: true
+});
 
 // Computed properties
 const currentChatRoom = computed(() => chatStore.currentChatRoom);
@@ -634,10 +657,31 @@ const handleSendMessage = async (messageData) => {
 
   if (result.success) {
     console.log('✅ Message sent successfully:', result);
+    
+    // Show conversion notice if files were converted
+    if (result.conversion_notice) {
+      showNotification('warning', 'File Converted', result.conversion_notice.message);
+    }
   } else {
     console.error('❌ Failed to send message:', result);
-    notificationStore.error('Error', result.message);
+    showNotification('error', 'Send Failed', result.message);
   }
+};
+
+// Notification methods
+const showNotification = (type, title, message, duration = 5000) => {
+  notification.value = {
+    show: true,
+    type,
+    title,
+    message,
+    duration,
+    autoClose: true
+  };
+};
+
+const closeNotification = () => {
+  notification.value.show = false;
 };
 
 const handleEditMessage = async (messageId, content) => {

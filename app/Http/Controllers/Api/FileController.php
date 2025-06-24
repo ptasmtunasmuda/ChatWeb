@@ -98,7 +98,7 @@ class FileController extends Controller
     /**
      * Download file
      */
-    public function download(Request $request, string $chatRoomId, string $messageId, string $mediaId): JsonResponse
+    public function download(Request $request, string $chatRoomId, string $messageId, string $fileIndex)
     {
         $user = $request->user();
         $chatRoom = ChatRoom::findOrFail($chatRoomId);
@@ -111,11 +111,32 @@ class FileController extends Controller
         }
 
         $message = Message::where('chat_room_id', $chatRoom->id)->findOrFail($messageId);
-        $media = $message->getMedia('attachments')->where('id', $mediaId)->first();
+        
+        // Get file info from attachment_info
+        $attachmentInfo = $message->attachment_info;
+        if (!$attachmentInfo || !isset($attachmentInfo['files'])) {
+            return response()->json([
+                'message' => 'No attachments found'
+            ], 404);
+        }
 
-        if (!$media) {
+        $files = $attachmentInfo['files'];
+        $index = (int) $fileIndex;
+        
+        if (!isset($files[$index])) {
             return response()->json([
                 'message' => 'File not found'
+            ], 404);
+        }
+
+        $file = $files[$index];
+        
+        // Construct file path (assuming files are stored in public storage)
+        $filePath = str_replace('/storage/', '', $file['url']);
+        
+        if (!Storage::disk('public')->exists($filePath)) {
+            return response()->json([
+                'message' => 'File not found on disk'
             ], 404);
         }
 
@@ -123,17 +144,20 @@ class FileController extends Controller
         UserActivityLog::log($user, 'file_downloaded', "Downloaded file from chat room: {$chatRoom->name}", [
             'chat_room_id' => $chatRoom->id,
             'message_id' => $message->id,
-            'media_id' => $media->id,
-            'file_name' => $media->name,
+            'file_index' => $index,
+            'file_name' => $file['original_name'],
         ]);
 
-        return response()->download($media->getPath(), $media->name);
+        $fullPath = Storage::disk('public')->path($filePath);
+        $fileName = $file['original_name'] ?? 'download';
+
+        return response()->download($fullPath, $fileName);
     }
 
     /**
      * Get file info
      */
-    public function info(Request $request, string $chatRoomId, string $messageId, string $mediaId): JsonResponse
+    public function info(Request $request, string $chatRoomId, string $messageId, string $fileIndex): JsonResponse
     {
         $user = $request->user();
         $chatRoom = ChatRoom::findOrFail($chatRoomId);
@@ -146,30 +170,42 @@ class FileController extends Controller
         }
 
         $message = Message::where('chat_room_id', $chatRoom->id)->findOrFail($messageId);
-        $media = $message->getMedia('attachments')->where('id', $mediaId)->first();
+        
+        // Get file info from attachment_info
+        $attachmentInfo = $message->attachment_info;
+        if (!$attachmentInfo || !isset($attachmentInfo['files'])) {
+            return response()->json([
+                'message' => 'No attachments found'
+            ], 404);
+        }
 
-        if (!$media) {
+        $files = $attachmentInfo['files'];
+        $index = (int) $fileIndex;
+        
+        if (!isset($files[$index])) {
             return response()->json([
                 'message' => 'File not found'
             ], 404);
         }
 
+        $file = $files[$index];
+
         return response()->json([
-            'id' => $media->id,
-            'name' => $media->name,
-            'file_name' => $media->file_name,
-            'mime_type' => $media->mime_type,
-            'size' => $media->size,
-            'human_readable_size' => $media->human_readable_size,
-            'url' => $media->getUrl(),
-            'created_at' => $media->created_at,
+            'index' => $index,
+            'original_name' => $file['original_name'],
+            'size' => $file['size'],
+            'mime_type' => $file['mime_type'],
+            'category' => $file['category'],
+            'was_converted' => $file['was_converted'] ?? false,
+            'url' => $file['url'],
+            'created_at' => $message->created_at,
         ]);
     }
 
     /**
      * Delete file
      */
-    public function delete(Request $request, string $chatRoomId, string $messageId, string $mediaId): JsonResponse
+    public function delete(Request $request, string $chatRoomId, string $messageId, string $fileIndex): JsonResponse
     {
         $user = $request->user();
         $chatRoom = ChatRoom::findOrFail($chatRoomId);
@@ -186,23 +222,49 @@ class FileController extends Controller
             ], 403);
         }
 
-        $media = $message->getMedia('attachments')->where('id', $mediaId)->first();
+        // Get file info from attachment_info
+        $attachmentInfo = $message->attachment_info;
+        if (!$attachmentInfo || !isset($attachmentInfo['files'])) {
+            return response()->json([
+                'message' => 'No attachments found'
+            ], 404);
+        }
 
-        if (!$media) {
+        $files = $attachmentInfo['files'];
+        $index = (int) $fileIndex;
+        
+        if (!isset($files[$index])) {
             return response()->json([
                 'message' => 'File not found'
             ], 404);
         }
 
+        $file = $files[$index];
+
         // Log activity before deletion
         UserActivityLog::log($user, 'file_deleted', "Deleted file from chat room: {$chatRoom->name}", [
             'chat_room_id' => $chatRoom->id,
             'message_id' => $message->id,
-            'media_id' => $media->id,
-            'file_name' => $media->name,
+            'file_index' => $index,
+            'file_name' => $file['original_name'],
         ]);
 
-        $media->delete();
+        // Remove file from attachment_info array
+        unset($files[$index]);
+        
+        // Reindex array to maintain proper indices
+        $files = array_values($files);
+        
+        // Update message attachment_info
+        $attachmentInfo['files'] = $files;
+        $attachmentInfo['total_files'] = count($files);
+        
+        $message->update(['attachment_info' => $attachmentInfo]);
+
+        // If no files left, optionally update message content
+        if (empty($files)) {
+            $message->update(['content' => '[File deleted]']);
+        }
 
         return response()->json([
             'message' => 'File deleted successfully'

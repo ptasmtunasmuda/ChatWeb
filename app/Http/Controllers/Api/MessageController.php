@@ -9,6 +9,7 @@ use App\Models\UserActivityLog;
 use App\Events\MessageSent;
 use App\Events\MessageUpdated;
 use App\Events\MessageDeleted;
+use App\Services\FileUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
@@ -70,12 +71,30 @@ class MessageController extends Controller
             ], 403);
         }
 
-        $validator = Validator::make($request->all(), [
-            'content' => 'required_without:attachments|string|max:5000',
+        // Check if this is a file upload request by checking various file field formats
+        $hasFiles = $request->hasFile('attachments') || 
+                   collect($request->allFiles())->keys()->contains(function ($key) {
+                       return str_starts_with($key, 'attachments');
+                   });
+
+        // Prepare validation rules based on whether files are present
+        $rules = [
             'type' => 'sometimes|in:text,image,audio,file',
             'reply_to_message_id' => 'sometimes|nullable|exists:messages,id',
-            'attachments' => 'sometimes|array|max:5',
-            'attachments.*' => 'file|max:10240', // 10MB max per file
+        ];
+
+        // Content is only required if no files are being uploaded
+        if ($hasFiles) {
+            $rules['content'] = 'nullable|string|max:5000';
+            // Add file validation rules when files are present
+            $rules['attachments'] = 'sometimes|array|max:5';
+            $rules['attachments.*'] = 'file|max:10240'; // 10MB max per file
+        } else {
+            $rules['content'] = 'required|string|max:5000';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'content.required' => 'Message content is required when no files are attached.',
         ]);
 
         if ($validator->fails()) {
@@ -87,24 +106,88 @@ class MessageController extends Controller
 
         DB::beginTransaction();
         try {
+            $fileUploadService = new FileUploadService();
+            $attachmentInfo = null;
+            $messageType = $request->get('type', 'text');
+            $wasConverted = false;
+
+            // Handle file attachments - support both 'attachments' and 'attachments[0]' format
+            $hasAttachments = $request->hasFile('attachments');
+            $hasArrayAttachments = false;
+            
+            // Check for array format attachments[0], attachments[1], etc.
+            if (!$hasAttachments) {
+                foreach ($request->allFiles() as $key => $file) {
+                    if (str_starts_with($key, 'attachments[')) {
+                        $hasArrayAttachments = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($hasAttachments || $hasArrayAttachments) {
+                $uploadedFiles = [];
+                $attachments = [];
+
+                if ($hasAttachments) {
+                    // Handle standard 'attachments' field
+                    $attachments = is_array($request->file('attachments')) 
+                        ? $request->file('attachments') 
+                        : [$request->file('attachments')];
+                } else {
+                    // Handle array format 'attachments[0]', 'attachments[1]', etc.
+                    foreach ($request->allFiles() as $key => $file) {
+                        if (str_starts_with($key, 'attachments[')) {
+                            $attachments[] = $file;
+                        }
+                    }
+                }
+
+                foreach ($attachments as $file) {
+                    $fileResult = $fileUploadService->processUpload($file);
+                    $uploadedFiles[] = $fileResult;
+                    
+                    if ($fileResult['was_converted']) {
+                        $wasConverted = true;
+                    }
+                    
+                    // Set message type based on file category
+                    if ($fileResult['category'] === 'image') {
+                        $messageType = 'image';
+                    } elseif ($fileResult['category'] === 'document' || $fileResult['category'] === 'other') {
+                        $messageType = 'file';
+                    }
+                }
+
+                $attachmentInfo = [
+                    'files' => $uploadedFiles,
+                    'total_files' => count($uploadedFiles),
+                    'has_converted_files' => $wasConverted
+                ];
+            }
+
+            // Determine content and message type
+            $content = $request->get('content', '');
+            
+            // If no content provided but has attachments, generate default content
+            if (empty($content) && $attachmentInfo) {
+                $fileCount = $attachmentInfo['total_files'];
+                if ($fileCount === 1) {
+                    $content = '📎 Sent a file';
+                } else {
+                    $content = "📎 Sent {$fileCount} files";
+                }
+            }
+
             // Create message
             $message = Message::create([
                 'chat_room_id' => $chatRoom->id,
                 'user_id' => $user->id,
-                'content' => $request->content,
-                'type' => $request->get('type', 'text'),
+                'content' => $content,
+                'type' => $messageType,
                 'reply_to_message_id' => $request->reply_to_message_id,
+                'attachment_info' => $attachmentInfo,
             ]);
-
-            // Handle file attachments
-            if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $message->addMediaFromRequest('attachments')
-                           ->each(function ($fileAdder) {
-                               $fileAdder->toMediaCollection('attachments');
-                           });
-                }
-            }
 
             // Mark as read by sender
             $message->markAsRead($user);
@@ -134,10 +217,22 @@ class MessageController extends Controller
             broadcast(new MessageSent($message));
             \Log::info('MessageSent event broadcasted successfully');
 
-            return response()->json([
+            $response = [
                 'message' => 'Message sent successfully',
                 'data' => $message
-            ], 201);
+            ];
+
+            // Add conversion notification if files were converted
+            if ($wasConverted) {
+                $convertedCount = collect($attachmentInfo['files'])->where('was_converted', true)->count();
+                $response['conversion_notice'] = [
+                    'message' => "File berhasil dikonversi ke format ZIP",
+                    'converted_files' => $convertedCount,
+                    'type' => 'file_converted'
+                ];
+            }
+
+            return response()->json($response, 201);
 
         } catch (\Exception $e) {
             DB::rollback();
