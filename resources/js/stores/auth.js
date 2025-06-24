@@ -173,6 +173,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
+    const updateUser = (userData) => {
+        user.value = userData;
+    };
+
     // Initialize user if token exists
     if (token.value && !user.value) {
         fetchUser();
@@ -189,6 +193,7 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         fetchUser,
         updateProfile,
-        changePassword
+        changePassword,
+        updateUser
     };
 });

@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Events\UserAvatarUpdated;
 
 class AuthController extends Controller
 {
@@ -198,5 +201,98 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password changed successfully'
         ]);
+    }
+
+    /**
+     * Upload user avatar
+     */
+    public function uploadAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Delete old avatar if exists
+            if ($user->avatar) {
+                $oldAvatarPath = str_replace('/storage/', '', $user->avatar);
+                if (Storage::disk('public')->exists($oldAvatarPath)) {
+                    Storage::disk('public')->delete($oldAvatarPath);
+                }
+            }
+
+            // Store new avatar
+            $avatarFile = $request->file('avatar');
+            $avatarName = Str::uuid() . '.' . $avatarFile->getClientOriginalExtension();
+            $avatarPath = $avatarFile->storeAs('avatars', $avatarName, 'public');
+            
+            // Update user avatar URL
+            $avatarUrl = '/storage/' . $avatarPath;
+            $user->update(['avatar' => $avatarUrl]);
+
+            // Log avatar upload activity
+            UserActivityLog::log($user, 'avatar_upload', 'User uploaded new avatar');
+
+            // Broadcast avatar update event
+            broadcast(new UserAvatarUpdated($user))->toOthers();
+
+            return response()->json([
+                'message' => 'Avatar uploaded successfully',
+                'user' => $user->fresh()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to upload avatar',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove user avatar
+     */
+    public function removeAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        try {
+            // Delete avatar file if exists
+            if ($user->avatar) {
+                $avatarPath = str_replace('/storage/', '', $user->avatar);
+                if (Storage::disk('public')->exists($avatarPath)) {
+                    Storage::disk('public')->delete($avatarPath);
+                }
+            }
+
+            // Remove avatar URL from user
+            $user->update(['avatar' => null]);
+
+            // Log avatar removal activity
+            UserActivityLog::log($user, 'avatar_remove', 'User removed avatar');
+
+            // Broadcast avatar update event
+            broadcast(new UserAvatarUpdated($user))->toOthers();
+
+            return response()->json([
+                'message' => 'Avatar removed successfully',
+                'user' => $user->fresh()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to remove avatar',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

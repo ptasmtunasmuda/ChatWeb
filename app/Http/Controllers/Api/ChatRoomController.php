@@ -26,7 +26,7 @@ class ChatRoomController extends Controller
         $query = $user->chatRooms()
                      ->wherePivot('is_active', true)
                      ->where('chat_rooms.is_active', true)
-                     ->with(['latestMessage.user', 'activeParticipants'])
+                     ->with(['latestMessageOverall.user', 'latestActiveMessage.user', 'activeParticipants'])
                      ->withCount('activeParticipants');
 
         // Filter by type if specified
@@ -42,6 +42,49 @@ class ChatRoomController extends Controller
 
         $chatRooms = $query->orderBy('updated_at', 'desc')
                           ->paginate($request->get('per_page', 20));
+
+        // Transform data to include correct latest_message
+        $chatRooms->getCollection()->transform(function ($room) {
+            // Get the latest overall message (including deleted ones)
+            $latestOverall = $room->latestMessageOverall;
+            $latestActive = $room->latestActiveMessage;
+            
+            // Use accessor logic: prioritize latest overall, fallback to latest active
+            $latest = $latestOverall ?: $latestActive;
+            
+            // Add as latest_message attribute
+            $room->latest_message = $latest;
+            
+            \Log::info("🔍 Room {$room->id} transformed:", [
+                'latest_overall' => $latestOverall ? [
+                    'id' => $latestOverall->id,
+                    'content' => $latestOverall->content,
+                    'is_deleted' => $latestOverall->is_deleted,
+                    'deleted_at' => $latestOverall->deleted_at,
+                    'trashed' => $latestOverall->trashed()
+                ] : null,
+                'latest_active' => $latestActive ? [
+                    'id' => $latestActive->id,
+                    'content' => $latestActive->content,
+                    'is_deleted' => $latestActive->is_deleted,
+                    'deleted_at' => $latestActive->deleted_at
+                ] : null,
+                'final_latest_message' => $room->latest_message ? [
+                    'id' => $room->latest_message->id,
+                    'content' => $room->latest_message->content,
+                    'is_deleted' => $room->latest_message->is_deleted,
+                    'deleted_at' => $room->latest_message->deleted_at,
+                    'trashed' => method_exists($room->latest_message, 'trashed') ? $room->latest_message->trashed() : null
+                ] : null
+            ]);
+            
+            return $room;
+        });
+
+        // Debug logging
+        \Log::info('🔍 ChatRooms API Response Debug:', [
+            'total_rooms' => $chatRooms->count()
+        ]);
 
         return response()->json($chatRooms);
     }

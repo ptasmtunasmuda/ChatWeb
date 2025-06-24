@@ -213,6 +213,9 @@ class MessageController extends Controller
 
         $message->markAsEdited();
 
+        // Update chat room timestamp to reflect latest activity
+        $chatRoom->touch();
+
         // Log activity
         UserActivityLog::log($user, 'message_edited', "Edited message in chat room: {$chatRoom->name}", [
             'chat_room_id' => $chatRoom->id,
@@ -261,6 +264,9 @@ class MessageController extends Controller
         $message->load(['user', 'replyToMessage.user']);
 
         $message->delete();
+
+        // Update chat room timestamp to reflect latest activity
+        $chatRoom->touch();
 
         // Log activity
         $action = $isMessageSender ? 'message_deleted_self' : 'message_deleted_admin';

@@ -27,6 +27,39 @@ class ChatRoom extends Model
         ];
     }
 
+    // Remove appends and handle this in controller
+    // protected $appends = ['latest_message'];
+
+    /**
+     * Accessor for latest_message attribute that handles deleted messages properly
+     */
+    public function getLatestMessageAttribute()
+    {
+        // Get the latest message overall (including deleted ones)
+        if (!$this->relationLoaded('latestMessageOverall')) {
+            $this->load('latestMessageOverall.user');
+        }
+        
+        $latestOverall = $this->latestMessageOverall;
+        
+        // If the latest overall message is deleted, return it (to show "deleted" status)
+        if ($latestOverall && $latestOverall->trashed()) {
+            return $latestOverall;
+        }
+        
+        // If the latest overall message is not deleted, return it
+        if ($latestOverall && !$latestOverall->trashed()) {
+            return $latestOverall;
+        }
+        
+        // Fallback: get latest active message
+        if (!$this->relationLoaded('latestActiveMessage')) {
+            $this->load('latestActiveMessage.user');
+        }
+        
+        return $this->latestActiveMessage;
+    }
+
     /**
      * Relationships
      */
@@ -55,6 +88,16 @@ class ChatRoom extends Model
     public function latestMessage()
     {
         return $this->hasOne(Message::class)->latest();
+    }
+
+    public function latestActiveMessage()
+    {
+        return $this->hasOne(Message::class)->whereNull('deleted_at')->latest();
+    }
+
+    public function latestMessageOverall()
+    {
+        return $this->hasOne(Message::class)->withTrashed()->latest();
     }
 
     /**

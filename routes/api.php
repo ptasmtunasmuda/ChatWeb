@@ -42,6 +42,12 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::put('/password', [AuthController::class, 'changePassword']);
     });
 
+    // Profile avatar routes
+    Route::prefix('profile')->group(function () {
+        Route::post('/avatar', [AuthController::class, 'uploadAvatar']);
+        Route::delete('/avatar', [AuthController::class, 'removeAvatar']);
+    });
+
     // User routes
     Route::prefix('user')->group(function () {
         Route::get('/profile', [UserController::class, 'profile']);

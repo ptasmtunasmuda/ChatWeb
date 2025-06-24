@@ -34,7 +34,26 @@ export const useChatStore = defineStore('chat', () => {
         loading.value = true;
         try {
             const response = await axios.get('/api/chat-rooms');
-            const rooms = response.data.data || [];
+            
+            console.log('🔍 Full API response structure:', response.data);
+            console.log('🔍 Response keys:', Object.keys(response.data));
+            
+            // Handle pagination response structure
+            const rooms = response.data.data || response.data || [];
+
+            console.log('🔍 Rooms extracted:', rooms);
+
+            // Log each room's latest message for debugging
+            rooms.forEach(room => {
+                console.log(`🔍 Room ${room.id} (${room.name}):`, {
+                    latest_message: room.latest_message,
+                    latest_message_content: room.latest_message?.content,
+                    latest_message_is_deleted: room.latest_message?.is_deleted,
+                    latest_message_updated_at: room.latest_message?.updated_at,
+                    latest_message_created_at: room.latest_message?.created_at,
+                    updated_at: room.updated_at
+                });
+            });
 
             // Ensure each room has participants data
             chatRooms.value = rooms.map(room => ({
@@ -376,6 +395,50 @@ export const useChatStore = defineStore('chat', () => {
         }
     };
 
+    const updateUserAvatarInChats = (userData) => {
+        console.log('🖼️ Chat Store: Updating user avatar in chats:', userData);
+
+        // Update in chat rooms participants
+        chatRooms.value.forEach((room, roomIndex) => {
+            if (room.participants) {
+                room.participants.forEach((participant, participantIndex) => {
+                    if (participant.id === userData.id) {
+                        chatRooms.value[roomIndex].participants[participantIndex] = {
+                            ...participant,
+                            ...userData
+                        };
+                        console.log(`✅ Avatar updated for participant ${userData.id} in room ${room.id}`);
+                    }
+                });
+            }
+        });
+
+        // Update in current chat participants
+        const participantIndex = participants.value.findIndex(p => p.id === userData.id);
+        if (participantIndex !== -1) {
+            participants.value[participantIndex] = {
+                ...participants.value[participantIndex],
+                ...userData
+            };
+            console.log(`✅ Avatar updated for current chat participant ${userData.id}`);
+        }
+
+        // Update in current chat room data
+        if (currentChatRoom.value && currentChatRoom.value.participants) {
+            const currentParticipantIndex = currentChatRoom.value.participants.findIndex(p => p.id === userData.id);
+            if (currentParticipantIndex !== -1) {
+                currentChatRoom.value.participants[currentParticipantIndex] = {
+                    ...currentChatRoom.value.participants[currentParticipantIndex],
+                    ...userData
+                };
+                console.log(`✅ Avatar updated for current room participant ${userData.id}`);
+            }
+        }
+    };
+
+    // Alias function to handle potential cache issues
+    const handleUserAvatarUpdate = updateUserAvatarInChats;
+
     const updateChatRoomLastMessage = (chatRoomId, message) => {
         const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
         if (chatRoomIndex !== -1) {
@@ -458,6 +521,8 @@ export const useChatStore = defineStore('chat', () => {
         updateChatRoomLastMessage,
         resetUnreadCount,
         findPreviousMessage,
+        updateUserAvatarInChats,
+        handleUserAvatarUpdate,
 
         // Clear functions
         clearCurrentChat,

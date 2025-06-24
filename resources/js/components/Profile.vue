@@ -14,15 +14,83 @@
       <!-- Profile Card -->
       <div class="card mb-8">
         <div class="flex items-center space-x-6">
-          <div class="w-24 h-24 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-blue">
-            {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+          <div class="relative">
+            <!-- Avatar Display -->
+            <div 
+              v-if="authStore.user?.avatar" 
+              class="w-24 h-24 rounded-full overflow-hidden shadow-blue border-4 border-white"
+            >
+              <img 
+                :src="authStore.user.avatar" 
+                :alt="authStore.user?.name"
+                class="w-full h-full object-cover"
+              />
+            </div>
+            <div 
+              v-else
+              class="w-24 h-24 bg-gradient-to-r from-primary-400 to-accent-400 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-blue"
+            >
+              {{ authStore.user?.name?.charAt(0).toUpperCase() }}
+            </div>
+            
+            <!-- Upload Button Overlay -->
+            <div class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer group" @click="triggerFileInput">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            
+            <!-- Hidden File Input -->
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/*"
+              @change="handleAvatarUpload"
+              class="hidden"
+            />
+            
+            <!-- Loading Spinner -->
+            <div 
+              v-if="avatarLoading" 
+              class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center"
+            >
+              <div class="spinner-white"></div>
+            </div>
           </div>
-          <div>
+          
+          <div class="flex-1">
             <h2 class="text-2xl font-bold text-secondary-900">{{ authStore.user?.name }}</h2>
             <p class="text-secondary-600">{{ authStore.user?.email }}</p>
             <p class="text-sm text-secondary-500 mt-1">
               Member since {{ formatDate(authStore.user?.created_at) }}
             </p>
+            
+            <!-- Avatar Actions -->
+            <div class="flex space-x-3 mt-3">
+              <button 
+                @click="triggerFileInput"
+                :disabled="avatarLoading"
+                class="text-sm bg-primary-100 hover:bg-primary-200 text-primary-700 px-3 py-1 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span>{{ avatarLoading ? 'Uploading...' : 'Upload Photo' }}</span>
+              </button>
+              
+              <button 
+                v-if="authStore.user?.avatar"
+                @click="removeAvatar"
+                :disabled="avatarLoading"
+                class="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Remove</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -207,14 +275,17 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useNotificationStore } from '../stores/notifications';
+import axios from 'axios';
 
 const authStore = useAuthStore();
 const notificationStore = useNotificationStore();
 
 const loading = ref(false);
 const passwordLoading = ref(false);
+const avatarLoading = ref(false);
 const errors = ref({});
 const passwordErrors = ref({});
+const fileInput = ref(null);
 
 const form = reactive({
   name: '',
@@ -242,7 +313,11 @@ const updateProfile = async () => {
   errors.value = {};
 
   try {
-    // This would be implemented with actual API call
+    const response = await axios.put('/api/auth/profile', form);
+    
+    // Update user in auth store
+    authStore.updateUser(response.data);
+    
     notificationStore.success('Success', 'Profile updated successfully');
   } catch (error) {
     if (error.response?.status === 422) {
@@ -259,7 +334,8 @@ const updatePassword = async () => {
   passwordErrors.value = {};
 
   try {
-    // This would be implemented with actual API call
+    await axios.put('/api/auth/password', passwordForm);
+    
     notificationStore.success('Success', 'Password updated successfully');
     
     // Clear form
@@ -273,6 +349,83 @@ const updatePassword = async () => {
     notificationStore.error('Error', error.response?.data?.message || 'Failed to update password');
   } finally {
     passwordLoading.value = false;
+  }
+};
+
+const triggerFileInput = () => {
+  if (avatarLoading.value) return;
+  fileInput.value?.click();
+};
+
+const handleAvatarUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    notificationStore.error('Error', 'Please select a valid image file');
+    return;
+  }
+
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    notificationStore.error('Error', 'File size must be less than 5MB');
+    return;
+  }
+
+  avatarLoading.value = true;
+
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    // Make API call to upload avatar
+    const response = await axios.post('/api/profile/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Update user avatar in store
+    if (response.data.user) {
+      authStore.updateUser(response.data.user);
+      notificationStore.success('Success', 'Profile photo updated successfully');
+    }
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    notificationStore.error('Error', error.response?.data?.message || 'Failed to upload profile photo');
+  } finally {
+    avatarLoading.value = false;
+    // Clear file input
+    if (fileInput.value) {
+      fileInput.value.value = '';
+    }
+  }
+};
+
+const removeAvatar = async () => {
+  if (avatarLoading.value) return;
+
+  if (!confirm('Are you sure you want to remove your profile photo?')) {
+    return;
+  }
+
+  avatarLoading.value = true;
+
+  try {
+    // Make API call to remove avatar
+    const response = await axios.delete('/api/profile/avatar');
+
+    // Update user avatar in store
+    if (response.data.user) {
+      authStore.updateUser(response.data.user);
+      notificationStore.success('Success', 'Profile photo removed successfully');
+    }
+  } catch (error) {
+    console.error('Avatar removal error:', error);
+    notificationStore.error('Error', error.response?.data?.message || 'Failed to remove profile photo');
+  } finally {
+    avatarLoading.value = false;
   }
 };
 
@@ -331,6 +484,15 @@ onMounted(() => {
   height: 1rem;
   border: 2px solid transparent;
   border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-white {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }

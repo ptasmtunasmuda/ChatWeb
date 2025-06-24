@@ -111,6 +111,22 @@ export const useUsersStore = defineStore('users', () => {
         }
     };
 
+    const updateUserAvatar = (userData) => {
+        console.log('🖼️ Users Store: Updating user avatar:', userData);
+        
+        const userIndex = users.value.findIndex(user => user.id === userData.id);
+        if (userIndex !== -1) {
+            // Update the user data with new avatar
+            users.value[userIndex] = {
+                ...users.value[userIndex],
+                ...userData
+            };
+            console.log(`✅ Avatar updated for user ${userData.id}: ${userData.avatar || 'removed'}`);
+        } else {
+            console.warn(`⚠️ User ${userData.id} not found in users list for avatar update`);
+        }
+    };
+
     const startHeartbeat = () => {
         // Send heartbeat every 15 seconds for better responsiveness
         console.log('💓 Starting heartbeat...');
@@ -132,6 +148,21 @@ export const useUsersStore = defineStore('users', () => {
         }
     };
 
+    const cleanup = () => {
+        stopHeartbeat();
+        
+        // Leave Echo channels
+        if (window.Echo) {
+            try {
+                window.Echo.leave('users-status');
+                window.Echo.leave('user-updates');
+                console.log('✅ Users store channels cleaned up');
+            } catch (error) {
+                console.warn('⚠️ Error cleaning up users store channels:', error);
+            }
+        }
+    };
+
     const setupRealtimeListeners = () => {
         if (!window.Echo) return;
 
@@ -143,6 +174,16 @@ export const useUsersStore = defineStore('users', () => {
             })
             .error((error) => {
                 console.error('❌ Error on users-status channel:', error);
+            });
+
+        // Listen for user avatar updates
+        window.Echo.channel('user-updates')
+            .listen('.user.avatar.updated', (e) => {
+                console.log('🖼️ User avatar update received:', e);
+                updateUserAvatar(e.user);
+            })
+            .error((error) => {
+                console.error('❌ Error on user-updates channel:', error);
             });
     };
 
@@ -158,8 +199,10 @@ export const useUsersStore = defineStore('users', () => {
         createPrivateChat,
         clearSearch,
         updateUserOnlineStatus,
+        updateUserAvatar,
         startHeartbeat,
         stopHeartbeat,
-        setupRealtimeListeners
+        setupRealtimeListeners,
+        cleanup
     };
 });

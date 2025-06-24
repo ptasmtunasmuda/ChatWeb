@@ -6,8 +6,24 @@
       <div class="p-4 border-b border-gray-200">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center">
-            <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
-              {{ authStore.user?.name?.charAt(0).toUpperCase() || 'A' }}
+            <!-- User Avatar -->
+            <div class="relative">
+              <div 
+                v-if="authStore.user?.avatar" 
+                class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
+              >
+                <img 
+                  :src="authStore.user.avatar" 
+                  :alt="authStore.user?.name"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div 
+                v-else
+                class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+              >
+                {{ authStore.user?.name?.charAt(0).toUpperCase() || 'A' }}
+              </div>
             </div>
             <div class="ml-3">
               <p class="font-semibold text-gray-900">{{ authStore.user?.name }}</p>
@@ -208,9 +224,24 @@
               ]"
             >
               <div class="relative">
-                <div class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <!-- Chat Avatar -->
+                <div 
+                  v-if="getChatAvatar(room)" 
+                  class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                >
+                  <img 
+                    :src="getChatAvatar(room)" 
+                    :alt="getChatDisplayName(room)"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div 
+                  v-else
+                  class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                >
                   {{ getChatAvatarInitial(room) }}
                 </div>
+                
                 <!-- Online indicator for private chats -->
                 <div
                   v-if="isOtherParticipantOnline(room)"
@@ -306,9 +337,24 @@
                 </svg>
               </button>
               <div class="relative">
-                <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                <!-- Chat Header Avatar -->
+                <div 
+                  v-if="getChatAvatar(selectedChatRoom)" 
+                  class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                >
+                  <img 
+                    :src="getChatAvatar(selectedChatRoom)" 
+                    :alt="getChatDisplayName(selectedChatRoom)"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div 
+                  v-else
+                  class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                >
                   {{ getChatAvatarInitial(selectedChatRoom) }}
                 </div>
+                
                 <div
                   v-if="isOtherParticipantOnline(selectedChatRoom)"
                   class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
@@ -418,6 +464,20 @@ const currentChatRoom = computed(() => chatStore.currentChatRoom);
 const sortedMessages = computed(() => chatStore.sortedMessages);
 const currentChatParticipants = computed(() => chatStore.currentChatParticipants);
 const typingUsers = computed(() => chatStore.typingUsers);
+
+// Helper function to get avatar for chat room
+const getChatAvatar = (room) => {
+  if (!room) return null;
+
+  // For private chats, get the other participant's avatar
+  if (room.type === 'private' && room.participants) {
+    const otherParticipant = room.participants.find(p => p.id !== authStore.user?.id);
+    return otherParticipant?.avatar || null;
+  }
+
+  // For group chats, could return room avatar if implemented
+  return null;
+};
 
 // Helper function to get display name for chat room
 const getChatDisplayName = (room) => {
@@ -698,6 +758,60 @@ const initializeChat = async () => {
 
   // Setup real-time listeners for user status
   usersStore.setupRealtimeListeners();
+
+  // Setup additional listeners for chat-specific avatar updates
+  if (window.Echo) {
+    // Listen for user avatar updates to update chat participants
+    window.Echo.channel('user-updates')
+      .listen('.user.avatar.updated', (e) => {
+        console.log('🖼️ Chat: User avatar update received:', e);
+        
+        // Update in chat store with fallback
+        try {
+          if (typeof chatStore.updateUserAvatarInChats === 'function') {
+            console.log('✅ Using updateUserAvatarInChats');
+            chatStore.updateUserAvatarInChats(e.user);
+          } else if (typeof chatStore.handleUserAvatarUpdate === 'function') {
+            console.log('✅ Using handleUserAvatarUpdate');
+            chatStore.handleUserAvatarUpdate(e.user);
+          } else {
+            console.warn('⚠️ Avatar update function not available, using manual update');
+            
+            // Manual update as fallback
+            const userData = e.user;
+            
+            // Update chat rooms participants manually
+            chatStore.chatRooms.forEach((room, roomIndex) => {
+              if (room.participants) {
+                room.participants.forEach((participant, participantIndex) => {
+                  if (participant.id === userData.id) {
+                    chatStore.chatRooms[roomIndex].participants[participantIndex] = {
+                      ...participant,
+                      ...userData
+                    };
+                    console.log(`✅ Manually updated avatar for participant ${userData.id} in room ${room.id}`);
+                  }
+                });
+              }
+            });
+            
+            // Update current chat participants manually
+            if (chatStore.participants) {
+              const participantIndex = chatStore.participants.findIndex(p => p.id === userData.id);
+              if (participantIndex !== -1) {
+                chatStore.participants[participantIndex] = {
+                  ...chatStore.participants[participantIndex],
+                  ...userData
+                };
+                console.log(`✅ Manually updated current chat participant ${userData.id}`);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error updating avatar in chats:', error);
+        }
+      });
+  }
 
   // Fetch users data for online status
   const usersResult = await usersStore.fetchUsers();
@@ -1054,6 +1168,12 @@ onUnmounted(() => {
       console.log('✅ Heartbeat stopped');
     }
 
+    // Cleanup users store
+    if (usersStore && usersStore.cleanup) {
+      usersStore.cleanup();
+      console.log('✅ Users store cleaned up');
+    }
+
     // Leave channels
     if (currentChatRoom.value && window.Echo) {
       console.log('🧹 Leaving chat room channel:', currentChatRoom.value.id);
@@ -1065,6 +1185,7 @@ onUnmounted(() => {
       window.Echo.leave('users-status');
       window.Echo.leave('chat-rooms');
       window.Echo.leave('user-messages');
+      window.Echo.leave('user-updates');
     }
 
     // Clear chat store
