@@ -226,7 +226,7 @@
               </div>
               <div class="ml-3 flex-1 text-left">
                 <p class="font-semibold text-gray-900">{{ getChatDisplayName(room) }}</p>
-                <p class="text-sm text-gray-500 truncate">{{ room.latest_message?.content || 'No messages yet' }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ getLatestMessageDisplay(room.latest_message) }}</p>
               </div>
               <div class="text-xs text-gray-500">{{ formatTime(room.updated_at) }}</div>
             </button>
@@ -487,6 +487,25 @@ const getChatStatusText = (room) => {
 
   // Show last seen time
   return `Last seen ${formatLastSeen(otherParticipant.last_seen)}`;
+};
+
+// Helper function to get display text for latest message
+const getLatestMessageDisplay = (message) => {
+  if (!message) return 'No messages yet';
+  
+  if (message.is_deleted) {
+    return '🗑️ This message was deleted';
+  }
+  
+  // Check if message was edited (compare updated_at with created_at)
+  const wasEdited = message.updated_at && message.created_at && 
+                   new Date(message.updated_at).getTime() > new Date(message.created_at).getTime();
+  
+  if (wasEdited) {
+    return `📝 ${message.content}`;
+  }
+  
+  return message.content || 'No messages yet';
 };
 
 const filteredChatRooms = computed(() => {

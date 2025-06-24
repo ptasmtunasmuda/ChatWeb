@@ -132,6 +132,13 @@ export const useChatStore = defineStore('chat', () => {
             const messageIndex = messages.value.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
                 messages.value[messageIndex] = updatedMessage;
+
+                // Update chat room's latest message if this is the latest message
+                const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
+                if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].latest_message?.id === messageId) {
+                    chatRooms.value[chatRoomIndex].latest_message = updatedMessage;
+                    console.log('✅ Chat Store: Chat room latest message updated after local edit');
+                }
             }
 
             return { success: true, message: updatedMessage };
@@ -148,12 +155,21 @@ export const useChatStore = defineStore('chat', () => {
             const messageIndex = messages.value.findIndex(msg => msg.id === messageId);
             if (messageIndex !== -1) {
                 // Mark message as deleted instead of removing it
-                messages.value[messageIndex] = {
+                const updatedMessage = {
                     ...messages.value[messageIndex],
                     is_deleted: true,
                     content: null,
                     deleted_at: new Date().toISOString()
                 };
+                
+                messages.value[messageIndex] = updatedMessage;
+
+                // Update chat room's latest message if this is the latest message
+                const chatRoomIndex = chatRooms.value.findIndex(room => room.id === chatRoomId);
+                if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].latest_message?.id === messageId) {
+                    chatRooms.value[chatRoomIndex].latest_message = updatedMessage;
+                    console.log('✅ Chat Store: Chat room latest message updated after local delete');
+                }
             }
 
             return { success: true };
@@ -271,6 +287,13 @@ export const useChatStore = defineStore('chat', () => {
             messages.value[messageIndex] = updatedMessage;
             console.log('📝 New message:', messages.value[messageIndex]);
             console.log('✅ Chat Store: Message updated via real-time');
+
+            // Update chat room's latest message if this is the latest message
+            const chatRoomIndex = chatRooms.value.findIndex(room => room.id === updatedMessage.chat_room_id);
+            if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].latest_message?.id === updatedMessage.id) {
+                chatRooms.value[chatRoomIndex].latest_message = updatedMessage;
+                console.log('✅ Chat Store: Chat room latest message updated after edit');
+            }
         } else {
             console.log('❌ Chat Store: Message not found for update');
         }
@@ -283,14 +306,32 @@ export const useChatStore = defineStore('chat', () => {
         const messageIndex = messages.value.findIndex(m => m.id === deletedMessage.id);
         if (messageIndex !== -1) {
             // Mark message as deleted instead of removing it
-            messages.value[messageIndex] = {
+            const updatedMessage = {
                 ...messages.value[messageIndex],
                 is_deleted: true,
                 content: null,
                 deleted_at: deletedMessage.deleted_at || new Date().toISOString()
             };
+            
+            messages.value[messageIndex] = updatedMessage;
             console.log('✅ Chat Store: Message marked as deleted via real-time');
+
+            // Update chat room's latest message if this is the latest message
+            const chatRoomIndex = chatRooms.value.findIndex(room => room.id === deletedMessage.chat_room_id);
+            if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].latest_message?.id === deletedMessage.id) {
+                // If the deleted message was the latest, show it as deleted
+                chatRooms.value[chatRoomIndex].latest_message = updatedMessage;
+                console.log('✅ Chat Store: Chat room latest message updated after delete');
+            }
         }
+    };
+
+    // Helper function to find previous non-deleted message
+    const findPreviousMessage = (chatRoomId, excludeMessageId) => {
+        const roomMessages = messages.value
+            .filter(m => m.chat_room_id === chatRoomId && m.id !== excludeMessageId && !m.is_deleted)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        return roomMessages.length > 0 ? roomMessages[0] : null;
     };
 
     const updateTypingUsers = (user, isTyping) => {
@@ -416,6 +457,7 @@ export const useChatStore = defineStore('chat', () => {
         addChatRoom,
         updateChatRoomLastMessage,
         resetUnreadCount,
+        findPreviousMessage,
 
         // Clear functions
         clearCurrentChat,
