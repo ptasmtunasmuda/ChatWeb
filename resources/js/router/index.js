@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth';
 // Import components
 import Login from '../components/auth/Login.vue';
 import Register from '../components/auth/Register.vue';
+import ForgotPassword from '../components/auth/ForgotPassword.vue';
 import Chat from '../components/chat/Chat.vue';
 import AdminDashboard from '../components/admin/AdminDashboard.vue';
 import AdminUsers from '../components/admin/AdminUsers.vue';
@@ -24,6 +25,12 @@ const routes = [
         path: '/register',
         name: 'Register',
         component: Register,
+        meta: { requiresGuest: true }
+    },
+    {
+        path: '/forgot-password',
+        name: 'ForgotPassword',
+        component: ForgotPassword,
         meta: { requiresGuest: true }
     },
     {
@@ -56,6 +63,11 @@ const routes = [
         name: 'AdminChats',
         component: AdminChats,
         meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    // 404 catch-all route
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/chat'
     }
 ];
 
