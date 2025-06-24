@@ -21,14 +21,19 @@ class Message extends Model implements HasMedia
         'is_edited',
         'edited_at',
         'attachment_info',
+        'is_system',
+        'system_type',
+        'system_data',
     ];
 
     protected function casts(): array
     {
         return [
             'is_edited' => 'boolean',
+            'is_system' => 'boolean',
             'edited_at' => 'datetime',
             'attachment_info' => 'array',
+            'system_data' => 'array',
         ];
     }
 
@@ -80,6 +85,16 @@ class Message extends Model implements HasMedia
     public function scopeByUser($query, $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeSystemMessages($query)
+    {
+        return $query->where('is_system', true);
+    }
+
+    public function scopeUserMessages($query)
+    {
+        return $query->where('is_system', false);
     }
 
     /**

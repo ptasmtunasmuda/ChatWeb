@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\FileDownloadController;
 use App\Http\Controllers\Api\TypingController;
 use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\Admin\ChatController as AdminChatController;
+use App\Http\Controllers\Api\GroupManagementController;
 use Illuminate\Support\Facades\Broadcast;
 
 /*
@@ -86,6 +87,21 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
 
     // Typing indicator
     Route::post('chat-rooms/{chatRoomId}/typing', [TypingController::class, 'typing']);
+
+    // Test route
+    Route::post('test-upload', [App\Http\Controllers\Api\TestController::class, 'testFileUpload']);
+
+    // Group Management routes
+    Route::prefix('groups')->group(function () {
+        Route::get('{id}/info', [GroupManagementController::class, 'getGroupInfo']);
+        Route::post('{id}/members', [GroupManagementController::class, 'addMember']);
+        Route::delete('{id}/members/{userId}', [GroupManagementController::class, 'removeMember']);
+        Route::put('{id}/members/{userId}/role', [GroupManagementController::class, 'changeMemberRole']);
+        Route::post('{id}/leave', [GroupManagementController::class, 'leaveGroup']);
+        Route::put('{id}/info', [GroupManagementController::class, 'updateGroupInfo']);
+        Route::post('{id}/avatar', [GroupManagementController::class, 'uploadAvatar']);
+        Route::delete('{id}', [GroupManagementController::class, 'deleteGroup']);
+    });
 
     // Admin routes
     Route::middleware('admin')->prefix('admin')->group(function () {

@@ -37,40 +37,66 @@
         v-for="message in messages"
         :key="message.id"
         class="flex items-end space-x-2 group"
-        :class="{ 'flex-row-reverse space-x-reverse': currentUser && message.user.id === currentUser.id }"
+        :class="{ 'flex-row-reverse space-x-reverse': currentUser && message.user && message.user.id === currentUser.id }"
       >
-        <!-- Avatar -->
-        <div class="flex-shrink-0">
-          <div class="relative">
-            <!-- User Avatar with Image -->
-            <div
-              v-if="message.user.avatar"
-              class="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm"
-            >
-              <img
-                :src="message.user.avatar"
-                :alt="message.user.name"
-                class="w-full h-full object-cover"
-              />
+        <!-- System Message -->
+        <div v-if="message.is_system" class="w-full">
+          <div class="flex justify-center my-4">
+            <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{{ message.content }}</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-1 text-center">
+                {{ formatTime(message.created_at) }}
+              </div>
             </div>
-            <!-- Fallback Avatar with Initials -->
-            <div
-              v-else
-              class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-            >
-              {{ message.user.name.charAt(0).toUpperCase() }}
-            </div>
-
-            <!-- Online Status Indicator (only for other users) -->
-            <div
-              v-if="currentUser && message.user.id !== currentUser.id && message.user.is_online"
-              class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
-            ></div>
           </div>
         </div>
 
-        <!-- Message Content -->
-        <div class="max-w-xs lg:max-w-md">
+        <!-- Regular User Message -->
+        <template v-else>
+          <!-- Avatar -->
+          <div class="flex-shrink-0">
+            <div class="relative">
+              <!-- User Avatar with Image -->
+              <div
+                v-if="message.user && message.user.avatar"
+                class="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm"
+              >
+                <img
+                  :src="message.user.avatar"
+                  :alt="message.user.name"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <!-- Fallback Avatar with Initials -->
+              <div
+                v-else-if="message.user"
+                class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+              >
+                {{ message.user.name.charAt(0).toUpperCase() }}
+              </div>
+              <!-- System message fallback -->
+              <div
+                v-else
+                class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+              >
+                S
+              </div>
+
+              <!-- Online Status Indicator (only for other users) -->
+              <div
+                v-if="currentUser && message.user && message.user.id !== currentUser.id && message.user.is_online"
+                class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Message Content -->
+          <div class="max-w-xs lg:max-w-md">
           <!-- Reply to message -->
           <div v-if="message.reply_to_message" class="mb-2 p-2 bg-gray-100 rounded-lg border-l-4 border-blue-400">
             <p class="text-xs text-blue-600 font-medium">{{ message.reply_to_message.user.name }}</p>
@@ -145,7 +171,7 @@
 
             <!-- Reaction button for other users' messages (only for non-deleted messages) -->
             <button
-              v-if="currentUser && message.user.id !== currentUser.id && !message.is_deleted"
+              v-if="currentUser && message.user && message.user.id !== currentUser.id && !message.is_deleted"
               class="p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,6 +180,7 @@
             </button>
           </div>
         </div>
+        </template>
       </div>
     </div>
 

@@ -193,6 +193,19 @@
       <div class="flex-1 overflow-y-auto">
         <!-- Chats Tab -->
         <div v-if="currentView === 'chats'">
+          <!-- Create New Chat Button -->
+          <div class="p-4 border-b border-gray-200">
+            <button
+              @click="showCreateRoomModal = true"
+              class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span class="font-medium">Create New Chat</span>
+            </button>
+          </div>
+
           <div v-if="chatStore.loading" class="p-4 space-y-4">
             <div v-for="i in 5" :key="i" class="animate-pulse">
               <div class="flex items-center space-x-3 p-3">
@@ -210,7 +223,16 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
             <h3 class="text-sm font-medium text-gray-900 mb-1">No chats found</h3>
-            <p class="text-sm text-gray-500">Start a new conversation</p>
+            <p class="text-sm text-gray-500 mb-4">Start a new conversation</p>
+            <button
+              @click="showCreateRoomModal = true"
+              class="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span>Create Chat</span>
+            </button>
           </div>
 
           <div v-else>
@@ -256,7 +278,20 @@
                 </div>
               </div>
               <div class="ml-3 flex-1 text-left">
-                <p class="font-semibold text-gray-900">{{ getChatDisplayName(room) }}</p>
+                <div class="flex items-center space-x-2">
+                  <p class="font-semibold text-gray-900">{{ getChatDisplayName(room) }}</p>
+                  <!-- Group Badge -->
+                  <span 
+                    v-if="room.type === 'group'" 
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0"
+                    title="Group Chat"
+                  >
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Group
+                  </span>
+                </div>
                 <p class="text-sm text-gray-500 truncate">{{ getLatestMessageDisplay(room.latest_message) }}</p>
               </div>
               <div class="text-xs text-gray-500">{{ formatTime(room.updated_at) }}</div>
@@ -336,48 +371,92 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <div class="relative">
-                <!-- Chat Header Avatar -->
-                <div
-                  v-if="getChatAvatar(selectedChatRoom)"
-                  class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
-                >
-                  <img
-                    :src="getChatAvatar(selectedChatRoom)"
-                    :alt="getChatDisplayName(selectedChatRoom)"
-                    class="w-full h-full object-cover"
-                  />
-                </div>
-                <div
-                  v-else
-                  class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
-                >
-                  {{ getChatAvatarInitial(selectedChatRoom) }}
-                </div>
+              
+              <!-- Chat Avatar & Info (Clickable for Groups) -->
+              <div 
+                class="flex items-center rounded-lg p-2 -m-2 transition-colors"
+                :class="{ 
+                  'cursor-pointer hover:bg-gray-50': selectedChatRoom?.type === 'group',
+                  'cursor-default': selectedChatRoom?.type !== 'group'
+                }"
+                @click="handleHeaderClick"
+              >
+                <div class="relative">
+                  <!-- Chat Header Avatar -->
+                  <div
+                    v-if="getChatAvatar(selectedChatRoom)"
+                    class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                  >
+                    <img
+                      :src="getChatAvatar(selectedChatRoom)"
+                      :alt="getChatDisplayName(selectedChatRoom)"
+                      class="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div
+                    v-else
+                    class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                  >
+                    {{ getChatAvatarInitial(selectedChatRoom) }}
+                  </div>
 
-                <div
-                  v-if="isOtherParticipantOnline(selectedChatRoom)"
-                  class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
-                ></div>
-              </div>
-              <div class="ml-3">
-                <p class="font-semibold text-gray-900">{{ getChatDisplayName(selectedChatRoom) }}</p>
-                <p class="text-sm" :class="isOtherParticipantOnline(selectedChatRoom) ? 'text-green-600' : 'text-gray-500'">
-                  {{ getChatStatusText(selectedChatRoom) }}
-                </p>
+                  <div
+                    v-if="isOtherParticipantOnline(selectedChatRoom)"
+                    class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
+                  ></div>
+                </div>
+                <div class="ml-3">
+                  <div class="flex items-center space-x-2">
+                    <p class="font-semibold text-gray-900">{{ getChatDisplayName(selectedChatRoom) }}</p>
+                    <!-- Group Icon -->
+                    <div 
+                      v-if="selectedChatRoom?.type === 'group'" 
+                      class="flex-shrink-0 w-5 h-5 flex items-center justify-center"
+                    >
+                      <svg 
+                        class="w-4 h-4 text-blue-600" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <p class="text-sm" :class="getStatusTextClass(selectedChatRoom)">
+                    {{ getChatStatusText(selectedChatRoom) }}
+                  </p>
+                </div>
               </div>
             </div>
             <div class="flex space-x-3">
+              <!-- Group Info Button (Groups Only) -->
+              <button 
+                v-if="selectedChatRoom?.type === 'group'"
+                @click="openGroupInfo"
+                class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors"
+                title="Group Info"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </button>
+              
+              <!-- Call Button -->
               <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </button>
+              
+              <!-- Video Call Button -->
               <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
+              
+              <!-- More Options -->
               <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
@@ -385,8 +464,6 @@
               </button>
             </div>
           </div>
-
-
         </div>
 
         <!-- Messages Area - Scrollable -->
@@ -425,6 +502,19 @@
       @created="handleRoomCreated"
     />
 
+    <!-- Group Info Modal -->
+    <GroupInfoModal
+      v-if="showGroupInfoModal && selectedChatRoom?.type === 'group'"
+      :group-id="selectedChatRoom.id"
+      :current-user="authStore.user"
+      @close="showGroupInfoModal = false"
+      @group-updated="handleGroupUpdated"
+      @group-deleted="handleGroupDeleted"
+      @member-added="handleMemberAdded"
+      @member-removed="handleMemberRemoved"
+      @left-group="handleLeftGroup"
+    />
+
     <!-- Notifications -->
     <Notification
       v-if="notification.show"
@@ -458,6 +548,7 @@ import ChatMessages from './ChatMessages.vue';
 import ChatInput from './ChatInput.vue';
 import CreateRoomModal from './CreateRoomModal.vue';
 import Contacts from './Contacts.vue';
+import GroupInfoModal from './GroupInfoModal.vue';
 import Notification from '../common/Notification.vue';
 
 const route = useRoute();
@@ -475,6 +566,7 @@ const dropdownOpen = ref(false);
 const selectedChatRoom = ref(null);
 const currentView = ref('chats'); // 'chats', 'calls', 'contacts', 'notifications'
 const chatMessagesRef = ref(null);
+const showGroupInfoModal = ref(false);
 
 // Notification state
 const notification = ref({
@@ -502,7 +594,11 @@ const getChatAvatar = (room) => {
     return otherParticipant?.avatar || null;
   }
 
-  // For group chats, could return room avatar if implemented
+  // For group chats, return group avatar if available
+  if (room.type === 'group') {
+    return room.avatar || null;
+  }
+
   return null;
 };
 
@@ -545,10 +641,27 @@ const formatLastSeenTime = (timestamp) => {
   return formatLastSeen(timestamp);
 };
 
+// Helper function to get status text class for chat header
+const getStatusTextClass = (room) => {
+  if (!room) return 'text-gray-500';
+  
+  if (room.type === 'group') {
+    return 'text-gray-500';
+  }
+  
+  return isOtherParticipantOnline(room) ? 'text-green-600' : 'text-gray-500';
+};
+
 // Helper function to get status text for chat header
 const getChatStatusText = (room) => {
-  if (!room || room.type !== 'private') return '';
-
+  if (!room) return '';
+  
+  if (room.type === 'group') {
+    const memberCount = room.participants?.length || room.active_participants_count || 0;
+    return `${memberCount} members`;
+  }
+  
+  // Private chat logic
   const otherParticipant = getOtherParticipant(room);
   if (!otherParticipant) return '';
 
@@ -751,6 +864,56 @@ const handleRoomCreated = (room) => {
   showCreateRoomModal.value = false;
   selectChatRoom(room);
   notificationStore.success('Success', 'Chat room created successfully!');
+};
+
+// Group management methods
+const handleHeaderClick = () => {
+  console.log('🖱️ Header clicked!');
+  console.log('📍 Selected chat room:', selectedChatRoom.value);
+  console.log('📍 Room type:', selectedChatRoom.value?.type);
+  
+  if (selectedChatRoom.value?.type === 'group') {
+    openGroupInfo();
+  } else {
+    console.log('ℹ️ This is not a group chat, header click ignored');
+  }
+};
+
+const openGroupInfo = () => {
+  console.log('🔍 Opening group info for:', selectedChatRoom.value);
+  if (selectedChatRoom.value?.type === 'group') {
+    console.log('✅ Opening group info modal');
+    showGroupInfoModal.value = true;
+  } else {
+    console.warn('⚠️ Not a group chat, cannot open group info');
+  }
+};
+
+const handleGroupUpdated = (groupData) => {
+  chatStore.updateGroupInfo(groupData.id, groupData);
+  notificationStore.success('Success', 'Group information updated!');
+};
+
+const handleGroupDeleted = (groupData) => {
+  chatStore.removeGroupFromList(groupData.id);
+  router.push('/chat');
+  notificationStore.info('Info', `Group "${groupData.name}" was deleted`);
+};
+
+const handleMemberAdded = ({ group, member }) => {
+  chatStore.addMemberToGroup(group.id, member);
+  notificationStore.success('Success', `${member.name} added to the group`);
+};
+
+const handleMemberRemoved = ({ group, member }) => {
+  chatStore.removeMemberFromGroup(group.id, member.id);
+  notificationStore.info('Info', `${member.name} removed from the group`);
+};
+
+const handleLeftGroup = (groupData) => {
+  chatStore.removeGroupFromList(groupData.id);
+  router.push('/chat');
+  notificationStore.info('Info', `You left "${groupData.name}"`);
 };
 
 const handleSearch = async () => {
@@ -986,6 +1149,68 @@ const setupRealTimeListeners = () => {
         }
       });
     }
+
+    // Listen for group management events
+    const userGroupsChannel = window.Echo.channel('user-groups.' + authStore.user.id);
+    console.log('📡 User groups channel created:', userGroupsChannel);
+
+    userGroupsChannel
+      .listen('.user.joined.group', (e) => {
+        console.log('🎉 User joined group:', e);
+        notificationStore.info('Group Update', e.message);
+        
+        // If it's current user being added, refresh chat rooms
+        if (e.member.id === authStore.user.id) {
+          chatStore.fetchChatRooms();
+        } else if (currentChatRoom.value?.id === e.group.id) {
+          // Update current group members
+          chatStore.addMemberToGroup(e.group.id, e.member);
+        }
+      })
+      .listen('.user.left.group', (e) => {
+        console.log('👋 User left group:', e);
+        notificationStore.info('Group Update', e.message);
+        
+        // If current user was removed/left, remove from chat list
+        if (e.member.id === authStore.user.id) {
+          chatStore.removeGroupFromList(e.group.id);
+          if (currentChatRoom.value?.id === e.group.id) {
+            router.push('/chat');
+          }
+        } else if (currentChatRoom.value?.id === e.group.id) {
+          // Update current group members
+          chatStore.removeMemberFromGroup(e.group.id, e.member.id);
+        }
+      })
+      .listen('.user.role.changed', (e) => {
+        console.log('👑 User role changed:', e);
+        notificationStore.info('Group Update', e.message);
+        
+        // Update member role in current group
+        if (currentChatRoom.value?.id === e.group.id) {
+          chatStore.updateMemberRole(e.group.id, e.member.id, e.new_role);
+        }
+      })
+      .listen('.group.info.updated', (e) => {
+        console.log('📝 Group info updated:', e);
+        notificationStore.info('Group Update', e.message);
+        
+        // Update group info
+        chatStore.updateGroupInfo(e.group.id, e.group);
+      })
+      .listen('.group.deleted', (e) => {
+        console.log('🗑️ Group deleted:', e);
+        notificationStore.warning('Group Deleted', e.message);
+        
+        // Remove group from chat list
+        chatStore.removeGroupFromList(e.group.id);
+        if (currentChatRoom.value?.id === e.group.id) {
+          router.push('/chat');
+        }
+      })
+      .error((error) => {
+        console.error('❌ Error on user-groups channel:', error);
+      });
 
     console.log('✅ Global real-time listeners setup complete');
   } catch (error) {

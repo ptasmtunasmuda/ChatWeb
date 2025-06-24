@@ -13,6 +13,7 @@ class ChatRoom extends Model
     protected $fillable = [
         'name',
         'description',
+        'avatar',
         'type',
         'created_by',
         'is_active',
@@ -118,11 +119,31 @@ class ChatRoom extends Model
      */
     public function addParticipant(User $user, string $role = 'member')
     {
-        return $this->participants()->attach($user->id, [
+        // Check if user exists in participants table (active or inactive)
+        $existingParticipant = $this->participants()->where('users.id', $user->id)->first();
+
+        if ($existingParticipant) {
+            // If user exists but is inactive, reactivate them
+            if (!$existingParticipant->pivot->is_active) {
+                $this->participants()->updateExistingPivot($user->id, [
+                    'role' => $role,
+                    'joined_at' => now(),
+                    'left_at' => null,
+                    'is_active' => true,
+                ]);
+                return 'reactivated';
+            }
+            // If user is already active, return false (already a member)
+            return false;
+        }
+
+        // If user doesn't exist, add them
+        $this->participants()->attach($user->id, [
             'role' => $role,
             'joined_at' => now(),
             'is_active' => true,
         ]);
+        return 'added';
     }
 
     public function removeParticipant(User $user)
@@ -136,6 +157,11 @@ class ChatRoom extends Model
     public function isParticipant(User $user): bool
     {
         return $this->activeParticipants()->where('users.id', $user->id)->exists();
+    }
+
+    public function hasParticipant(User $user): bool
+    {
+        return $this->participants()->where('users.id', $user->id)->exists();
     }
 
     public function getParticipantRole(User $user): ?string

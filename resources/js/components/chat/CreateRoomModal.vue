@@ -6,7 +6,7 @@
         <div class="flex items-center justify-between">
           <h3 class="text-xl font-bold text-gray-900">Create New Chat</h3>
           <button 
-            @click="$emit('close')"
+            @click="closeModal"
             class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@
         <div class="flex justify-end space-x-3 pt-4">
           <button
             type="button"
-            @click="$emit('close')"
+            @click="closeModal"
             class="px-6 py-2 text-gray-700 hover:text-gray-900 font-medium transition-colors duration-200"
           >
             Cancel
@@ -182,7 +182,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted } from 'vue';
 import { useChatStore } from '../../stores/chat';
 import { useNotificationStore } from '../../stores/notifications';
 import axios from 'axios';
@@ -245,6 +245,27 @@ const removeParticipant = (userId) => {
   selectedParticipants.value = selectedParticipants.value.filter(p => p.id !== userId);
 };
 
+// Handle modal close
+const closeModal = () => {
+  // Reset form when closing
+  form.name = '';
+  form.description = '';
+  form.type = 'private';
+  selectedParticipants.value = [];
+  searchResults.value = [];
+  userSearchQuery.value = '';
+  errors.value = {};
+  
+  emit('close');
+};
+
+// Handle escape key
+const handleEscKey = (event) => {
+  if (event.key === 'Escape' && !loading.value) {
+    closeModal();
+  }
+};
+
 const createRoom = async () => {
   loading.value = true;
   errors.value = {};
@@ -260,7 +281,18 @@ const createRoom = async () => {
     const result = await chatStore.createChatRoom(roomData);
     
     if (result.success) {
+      // Reset form
+      form.name = '';
+      form.description = '';
+      form.type = 'private';
+      selectedParticipants.value = [];
+      searchResults.value = [];
+      userSearchQuery.value = '';
+      
+      // Emit created event
       emit('created', result.chatRoom);
+      
+      // Close modal will be handled by parent component
     } else {
       notificationStore.error('Error', result.message);
     }
@@ -279,6 +311,15 @@ watch(() => form.type, (newType) => {
   if (newType === 'private' && selectedParticipants.value.length > 1) {
     selectedParticipants.value = selectedParticipants.value.slice(0, 1);
   }
+});
+
+// Setup escape key listener
+onMounted(() => {
+  document.addEventListener('keydown', handleEscKey);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscKey);
 });
 </script>
 

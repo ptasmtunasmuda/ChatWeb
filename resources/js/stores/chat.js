@@ -485,6 +485,83 @@ export const useChatStore = defineStore('chat', () => {
         }
     };
 
+    // Group management functions
+    const updateGroupInfo = (groupId, newInfo) => {
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === groupId);
+        if (chatRoomIndex !== -1) {
+            chatRooms.value[chatRoomIndex] = {
+                ...chatRooms.value[chatRoomIndex],
+                ...newInfo
+            };
+        }
+        
+        // Update current chat room if it's the same group
+        if (currentChatRoom.value?.id === groupId) {
+            currentChatRoom.value = {
+                ...currentChatRoom.value,
+                ...newInfo
+            };
+        }
+    };
+
+    const addMemberToGroup = (groupId, member) => {
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === groupId);
+        if (chatRoomIndex !== -1) {
+            if (!chatRooms.value[chatRoomIndex].participants) {
+                chatRooms.value[chatRoomIndex].participants = [];
+            }
+            chatRooms.value[chatRoomIndex].participants.push(member);
+        }
+        
+        // Update current participants if it's the current chat room
+        if (currentChatRoom.value?.id === groupId) {
+            if (!participants.value) {
+                participants.value = [];
+            }
+            participants.value.push(member);
+        }
+    };
+
+    const removeMemberFromGroup = (groupId, memberId) => {
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === groupId);
+        if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].participants) {
+            chatRooms.value[chatRoomIndex].participants = 
+                chatRooms.value[chatRoomIndex].participants.filter(p => p.id !== memberId);
+        }
+        
+        // Update current participants if it's the current chat room
+        if (currentChatRoom.value?.id === groupId) {
+            participants.value = participants.value.filter(p => p.id !== memberId);
+        }
+    };
+
+    const updateMemberRole = (groupId, memberId, newRole) => {
+        const chatRoomIndex = chatRooms.value.findIndex(room => room.id === groupId);
+        if (chatRoomIndex !== -1 && chatRooms.value[chatRoomIndex].participants) {
+            const memberIndex = chatRooms.value[chatRoomIndex].participants.findIndex(p => p.id === memberId);
+            if (memberIndex !== -1) {
+                chatRooms.value[chatRoomIndex].participants[memberIndex].role = newRole;
+            }
+        }
+        
+        // Update current participants if it's the current chat room
+        if (currentChatRoom.value?.id === groupId) {
+            const memberIndex = participants.value.findIndex(p => p.id === memberId);
+            if (memberIndex !== -1) {
+                participants.value[memberIndex].role = newRole;
+            }
+        }
+    };
+
+    const removeGroupFromList = (groupId) => {
+        chatRooms.value = chatRooms.value.filter(room => room.id !== groupId);
+        
+        // Clear current chat if it's the deleted group
+        if (currentChatRoom.value?.id === groupId) {
+            clearCurrentChat();
+        }
+    };
+
     // Clear functions
     const clearCurrentChat = () => {
         currentChatRoom.value = null;
@@ -544,6 +621,13 @@ export const useChatStore = defineStore('chat', () => {
         findPreviousMessage,
         updateUserAvatarInChats,
         handleUserAvatarUpdate,
+
+        // Group management functions
+        updateGroupInfo,
+        addMemberToGroup,
+        removeMemberFromGroup,
+        updateMemberRole,
+        removeGroupFromList,
 
         // Clear functions
         clearCurrentChat,
