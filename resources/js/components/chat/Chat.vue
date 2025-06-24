@@ -14,7 +14,7 @@
               <p class="text-sm text-gray-500">ChatWeb</p>
             </div>
           </div>
-          <div class="relative">
+          <div class="relative dropdown-container">
             <button
               @click="dropdownOpen = !dropdownOpen"
               class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -25,45 +25,78 @@
             </button>
             <div
               v-if="dropdownOpen"
-              class="absolute right-0 mt-2 w-48 card z-10"
+              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-10 overflow-hidden"
             >
-              <div class="py-1">
+              <div class="py-2">
+                <!-- Profile -->
                 <router-link
                   to="/profile"
-                  class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 text-left"
                   @click="dropdownOpen = false"
                 >
-                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Profile
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 text-left">
+                    <div class="block text-left">Profile</div>
+                    <div class="text-xs text-gray-500 text-left">Manage your account</div>
+                  </div>
                 </router-link>
 
                 <!-- Admin Menu (Only for Admin) -->
                 <router-link
                   v-if="authStore.isAdmin"
                   to="/admin"
-                  class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 text-left"
                   @click="dropdownOpen = false"
                 >
-                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  Admin
+                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                  </div>
+                  <div class="flex-1 text-left">
+                    <div class="block text-left">Admin Panel</div>
+                    <div class="text-xs text-gray-500 text-left">System management</div>
+                  </div>
                 </router-link>
 
-                <button class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Help & feedback
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-2"></div>
+
+                <!-- Help & Feedback -->
+                <button class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 text-left">
+                  <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 text-left">
+                    <div class="block text-left">Help & Feedback</div>
+                    <div class="text-xs text-gray-500 text-left">Get support & share ideas</div>
+                  </div>
                 </button>
-                <button class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" @click="handleLogout">
-                  <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Sign Out
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-2"></div>
+
+                <!-- Sign Out -->
+                <button 
+                  class="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 text-left" 
+                  @click="handleLogout"
+                >
+                  <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 text-left">
+                    <div class="block text-left">Sign Out</div>
+                    <div class="text-xs text-gray-500 text-left">Logout from your account</div>
+                  </div>
                 </button>
               </div>
             </div>
@@ -87,55 +120,55 @@
 
       <!-- Navigation -->
       <div class="px-4 py-3 border-b border-gray-200">
-        <div class="flex justify-between text-sm">
+        <div class="grid grid-cols-4 gap-2 text-sm">
           <button
             @click="currentView = 'chats'"
             :class="[
-              'flex flex-col items-center transition-colors',
-              currentView === 'chats' ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
+              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              currentView === 'chats' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            Chats
+            <span class="text-xs font-medium">Chats</span>
           </button>
           <button
             @click="currentView = 'calls'"
             :class="[
-              'flex flex-col items-center transition-colors',
-              currentView === 'calls' ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
+              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              currentView === 'calls' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
-            Calls
+            <span class="text-xs font-medium">Calls</span>
           </button>
           <button
             @click="currentView = 'contacts'"
             :class="[
-              'flex flex-col items-center transition-colors',
-              currentView === 'contacts' ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
+              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              currentView === 'contacts' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            Contacts
+            <span class="text-xs font-medium">Contacts</span>
           </button>
           <button
             @click="currentView = 'notifications'"
             :class="[
-              'flex flex-col items-center transition-colors',
-              currentView === 'notifications' ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
+              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              currentView === 'notifications' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.0001 9.7041V9C19.0001 5.13401 15.8661 2 12.0001 2C8.13407 2 5.00006 5.13401 5.00006 9V9.7041C5.00006 10.5491 4.74995 11.3752 4.28123 12.0783L3.13263 13.8012C2.08349 15.3749 2.88442 17.5139 4.70913 18.0116C9.48258 19.3134 14.5175 19.3134 19.291 18.0116C21.1157 17.5139 21.9166 15.3749 20.8675 13.8012L19.7189 12.0783C19.2502 11.3752 19.0001 10.5491 19.0001 9.7041Z" />
               <path opacity="0.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 19C8.15503 20.7478 9.92246 22 12 22C14.0775 22 15.845 20.7478 16.5 19" />
             </svg>
-            Notification
+            <span class="text-xs font-medium">Notifications</span>
           </button>
         </div>
       </div>
@@ -950,6 +983,34 @@ const handleLogout = async () => {
   }
 };
 
+// Handle click outside to close dropdown
+const handleClickOutside = (event) => {
+  const dropdown = document.querySelector('.dropdown-container');
+  if (dropdown && !dropdown.contains(event.target)) {
+    dropdownOpen.value = false;
+  }
+};
+
+// Handle ESC key to close dropdown
+const handleEscKey = (event) => {
+  if (event.key === 'Escape') {
+    dropdownOpen.value = false;
+  }
+};
+
+// Watch dropdown state to add/remove event listeners
+watch(dropdownOpen, (isOpen) => {
+  if (isOpen) {
+    // Add event listeners when dropdown opens
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('keydown', handleEscKey);
+  } else {
+    // Remove event listeners when dropdown closes
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', handleEscKey);
+  }
+});
+
 onMounted(async () => {
   await initializeChat();
 
@@ -964,6 +1025,10 @@ onUnmounted(() => {
   console.log('🧹 Chat component unmounting, cleaning up...');
 
   try {
+    // Clean up dropdown event listeners
+    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('keydown', handleEscKey);
+
     // Stop heartbeat
     if (usersStore && usersStore.stopHeartbeat) {
       usersStore.stopHeartbeat();
