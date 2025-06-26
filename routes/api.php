@@ -88,9 +88,6 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
     // Typing indicator
     Route::post('chat-rooms/{chatRoomId}/typing', [TypingController::class, 'typing']);
 
-    // Test route
-    Route::post('test-upload', [App\Http\Controllers\Api\TestController::class, 'testFileUpload']);
-
     // Group Management routes
     Route::prefix('groups')->group(function () {
         Route::get('{id}/info', [GroupManagementController::class, 'getGroupInfo']);
@@ -136,5 +133,11 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::post('chat-rooms/{chatRoomId}/messages/{messageId}/restore', [App\Http\Controllers\Admin\AdminChatController::class, 'restoreMessage']);
         Route::delete('chat-rooms/{chatRoomId}/messages/{messageId}/force', [App\Http\Controllers\Admin\AdminChatController::class, 'forceDeleteMessage']);
         Route::post('chat-rooms/{chatRoomId}/messages/bulk-delete', [App\Http\Controllers\Admin\AdminChatController::class, 'bulkDeleteMessages']);
+
+        // Additional admin routes
+        Route::get('messages', [App\Http\Controllers\Admin\AdminChatController::class, 'getAllMessages']);
+        Route::get('messages-deleted', [App\Http\Controllers\Admin\AdminChatController::class, 'getDeletedMessages']);
+        Route::delete('chat-rooms/{id}/force', [App\Http\Controllers\Admin\AdminChatController::class, 'forceDeleteChatRoom']);
+        Route::get('chat-rooms/{id}/analytics', [App\Http\Controllers\Admin\AdminChatController::class, 'getChatRoomAnalytics']);
     });
 });
