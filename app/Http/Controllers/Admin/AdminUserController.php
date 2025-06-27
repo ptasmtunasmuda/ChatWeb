@@ -350,6 +350,117 @@ class AdminUserController extends Controller
     }
 
     /**
+     * Get user's activity logs
+     */
+    public function getActivityLogs($id, Request $request)
+    {
+        $user = User::findOrFail($id);
+
+        $query = \App\Models\UserActivityLog::where('user_id', $id)
+            ->orderBy('created_at', 'desc');
+
+        // Filter by action type
+        if ($request->has('action') && $request->action) {
+            $query->where('action', $request->action);
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Search in description
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%");
+            });
+        }
+
+        $perPage = $request->get('per_page', 20);
+        $logs = $query->paginate($perPage);
+
+        // Add formatted data for each log
+        $logs->getCollection()->transform(function ($log) {
+            $log->formatted_action = $this->formatAction($log->action);
+            $log->formatted_date = $log->created_at->format('M j, Y g:i A');
+            $log->time_ago = $log->created_at->diffForHumans();
+            $log->metadata_formatted = $this->formatMetadata($log->metadata);
+            return $log;
+        });
+
+        return response()->json([
+            'logs' => $logs,
+            'user' => $user,
+            'available_actions' => $this->getAvailableActions()
+        ]);
+    }
+
+    /**
+     * Get available action types for filtering
+     */
+    public function getAvailableActions()
+    {
+        return [
+            'login' => 'Login',
+            'logout' => 'Logout',
+            'profile_updated' => 'Profile Updated',
+            'password_changed' => 'Password Changed',
+            'access_blocked' => 'Access Blocked',
+            'ip_whitelist_updated' => 'IP Whitelist Updated',
+            'message_sent' => 'Message Sent',
+            'file_uploaded' => 'File Uploaded',
+            'file_downloaded' => 'File Downloaded',
+            'chat_joined' => 'Chat Joined',
+            'chat_left' => 'Chat Left',
+            'user_created' => 'User Created',
+            'user_updated' => 'User Updated',
+            'user_deleted' => 'User Deleted',
+        ];
+    }
+
+    /**
+     * Format action for display
+     */
+    private function formatAction($action)
+    {
+        $actions = $this->getAvailableActions();
+        return $actions[$action] ?? ucwords(str_replace('_', ' ', $action));
+    }
+
+    /**
+     * Format metadata for display
+     */
+    private function formatMetadata($metadata)
+    {
+        if (!$metadata || !is_array($metadata)) {
+            return null;
+        }
+
+        $formatted = [];
+        foreach ($metadata as $key => $value) {
+            $formattedKey = ucwords(str_replace('_', ' ', $key));
+            
+            if (is_array($value)) {
+                $formatted[$formattedKey] = implode(', ', $value);
+            } elseif (is_string($value) && filter_var($value, FILTER_VALIDATE_IP)) {
+                $formatted[$formattedKey] = $value;
+            } elseif (is_string($value) && strlen($value) > 50) {
+                $formatted[$formattedKey] = substr($value, 0, 50) . '...';
+            } else {
+                $formatted[$formattedKey] = $value;
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
      * Update IP whitelist for a user
      */
     public function updateIpWhitelist(Request $request, $id)
@@ -379,6 +490,15 @@ class AdminUserController extends Controller
 
         $user->update([
             'allowed_ips' => empty($allowedIps) ? null : $allowedIps
+        ]);
+
+        // Log activity
+        \App\Models\UserActivityLog::log($user, 'ip_whitelist_updated', 'IP whitelist updated by admin', [
+            'admin_id' => auth()->id(),
+            'admin_email' => auth()->user()->email,
+            'old_ips' => $user->getOriginal('allowed_ips'),
+            'new_ips' => $allowedIps,
+            'changed_by' => 'admin_panel',
         ]);
 
         return response()->json([
@@ -412,6 +532,15 @@ class AdminUserController extends Controller
         if (!in_array($newIp, $currentIps)) {
             $currentIps[] = $newIp;
             $user->update(['allowed_ips' => $currentIps]);
+            
+            // Log activity
+            \App\Models\UserActivityLog::log($user, 'ip_whitelist_updated', "IP address {$newIp} added to whitelist by admin", [
+                'admin_id' => auth()->id(),
+                'admin_email' => auth()->user()->email,
+                'action_type' => 'add',
+                'ip_added' => $newIp,
+                'total_ips' => count($currentIps),
+            ]);
         }
 
         return response()->json([
@@ -447,6 +576,15 @@ class AdminUserController extends Controller
         }));
 
         $user->update(['allowed_ips' => empty($currentIps) ? null : $currentIps]);
+
+        // Log activity
+        \App\Models\UserActivityLog::log($user, 'ip_whitelist_updated', "IP address {$ipToRemove} removed from whitelist by admin", [
+            'admin_id' => auth()->id(),
+            'admin_email' => auth()->user()->email,
+            'action_type' => 'remove',
+            'ip_removed' => $ipToRemove,
+            'total_ips' => count($currentIps),
+        ]);
 
         return response()->json([
             'message' => 'IP removed from whitelist successfully',

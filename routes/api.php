@@ -124,6 +124,9 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::delete('users/{id}/ip-whitelist/remove', [App\Http\Controllers\Admin\AdminUserController::class, 'removeIpFromWhitelist']);
         Route::get('current-ip', [App\Http\Controllers\Admin\AdminUserController::class, 'getCurrentUserIp']);
 
+        // Activity Logs
+        Route::get('users/{id}/activity-logs', [App\Http\Controllers\Admin\AdminUserController::class, 'getActivityLogs']);
+
         // Chat management
         Route::get('chat-rooms', [App\Http\Controllers\Admin\AdminChatController::class, 'index']);
         Route::get('chat-rooms/{id}', [App\Http\Controllers\Admin\AdminChatController::class, 'show']);

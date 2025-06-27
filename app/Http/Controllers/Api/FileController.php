@@ -151,6 +151,15 @@ class FileController extends Controller
         $fullPath = Storage::disk('public')->path($filePath);
         $fileName = $file['original_name'] ?? 'download';
 
+        // Log file download activity
+        UserActivityLog::log($user, 'file_downloaded', "Downloaded file: {$fileName}", [
+            'chat_room_id' => $chatRoom->id,
+            'message_id' => $message->id,
+            'file_name' => $fileName,
+            'file_size' => $file['size'] ?? null,
+            'file_type' => $file['mime_type'] ?? null,
+        ]);
+
         return response()->download($fullPath, $fileName);
     }
 

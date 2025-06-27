@@ -44,7 +44,10 @@ class AuthController extends Controller
         ]);
 
         // Log registration activity
-        UserActivityLog::log($user, 'register', 'User registered successfully');
+        UserActivityLog::log($user, 'register', 'User registered successfully', [
+            'registration_method' => 'web',
+            'user_agent' => $request->userAgent(),
+        ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -101,7 +104,12 @@ class AuthController extends Controller
         $user->updateLastSeen();
 
         // Log login activity
-        UserActivityLog::log($user, 'login', 'User logged in successfully');
+        UserActivityLog::log($user, 'login', 'User logged in successfully', [
+            'login_method' => 'web',
+            'user_agent' => $request->userAgent(),
+            'ip_address' => $request->ip(),
+            'session_id' => session()->getId(),
+        ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -120,7 +128,10 @@ class AuthController extends Controller
         $user = $request->user();
 
         // Log logout activity
-        UserActivityLog::log($user, 'logout', 'User logged out successfully');
+        UserActivityLog::log($user, 'logout', 'User logged out successfully', [
+            'session_duration' => $user->last_seen_at ? now()->diffInMinutes($user->last_seen_at) : null,
+            'user_agent' => $request->userAgent(),
+        ]);
 
         // Revoke current token
         $request->user()->currentAccessToken()->delete();
@@ -158,10 +169,17 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $oldData = $user->only(['name', 'email', 'avatar']);
         $user->update($request->only(['name', 'email', 'avatar']));
+        $newData = $user->fresh()->only(['name', 'email', 'avatar']);
 
         // Log profile update activity
-        UserActivityLog::log($user, 'profile_update', 'User updated profile');
+        $changedFields = array_keys(array_diff_assoc($newData, $oldData));
+        UserActivityLog::log($user, 'profile_updated', 'User updated profile information', [
+            'changed_fields' => $changedFields,
+            'old_data' => $oldData,
+            'new_data' => $newData,
+        ]);
 
         return response()->json($user);
     }
@@ -196,7 +214,10 @@ class AuthController extends Controller
         ]);
 
         // Log password change activity
-        UserActivityLog::log($user, 'password_change', 'User changed password');
+        UserActivityLog::log($user, 'password_changed', 'User changed password successfully', [
+            'changed_at' => now()->toISOString(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return response()->json([
             'message' => 'Password changed successfully'

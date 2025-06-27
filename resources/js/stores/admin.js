@@ -274,6 +274,17 @@ export const useAdminStore = defineStore('admin', () => {
         }
     };
 
+    // Activity Logs Management
+    const fetchUserActivityLogs = async (userId, params = {}) => {
+        try {
+            const response = await axios.get(`/api/admin/users/${userId}/activity-logs`, { params });
+            return { success: true, data: response.data };
+        } catch (error) {
+            console.error('Error fetching activity logs:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to fetch activity logs' };
+        }
+    };
+
     // Chat Room Management Actions
     const fetchChatRooms = async (params = {}) => {
         chatRoomsLoading.value = true;
@@ -470,6 +481,9 @@ export const useAdminStore = defineStore('admin', () => {
         updateUserIpWhitelist,
         addIpToWhitelist,
         removeIpFromWhitelist,
+
+        // Activity Logs Management
+        fetchUserActivityLogs,
 
         // Chat Room Management
         fetchChatRooms,

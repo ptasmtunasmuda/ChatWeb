@@ -163,15 +163,7 @@
 
             <!-- Activity Tab -->
             <div v-show="activeTab === 'activity'">
-              <div class="space-y-6">
-                <h5 class="text-lg font-semibold text-secondary-900">Activity Log</h5>
-                <div class="text-center py-8 text-secondary-500">
-                  <svg class="w-12 h-12 mx-auto mb-3 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                  <p class="text-sm">Activity logs feature coming soon</p>
-                </div>
-              </div>
+              <ActivityLogViewer :user="user" />
             </div>
           </div>
         </div>
@@ -188,6 +180,7 @@
 <script setup>
 import { ref } from 'vue';
 import IpWhitelistManager from './IpWhitelistManager.vue';
+import ActivityLogViewer from './ActivityLogViewer.vue';
 
 const props = defineProps(['user']);
 const emit = defineEmits(['close', 'edit', 'updated']);
