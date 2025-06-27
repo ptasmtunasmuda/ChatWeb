@@ -10,6 +10,7 @@ A modern, full-featured real-time chat application built with Laravel 12 and Vue
 - **Role-based Access Control** (Admin/User)
 - **Profile Management** with avatar support
 - **Admin User Management** with CRUD operations
+- **🆕 IP Whitelist Management** - Control user access by IP address
 
 ### 💬 Real-time Chat System
 - **Real-time Messaging** with WebSocket (Laravel Reverb)
@@ -22,6 +23,7 @@ A modern, full-featured real-time chat application built with Laravel 12 and Vue
 ### 👑 Admin Panel
 - **Dashboard Analytics** with charts and statistics
 - **User Management** with advanced filtering
+- **🆕 IP Access Control** - Visual indicators and management
 - **Chat Room Monitoring** and moderation
 - **Message Management** and content moderation
 - **System Health Monitoring**
@@ -141,10 +143,14 @@ npm run dev
 ### Admin Account
 - **Email:** admin@chatweb.com
 - **Password:** password
+- **Features:** Full access including IP whitelist management
 
 ### User Account
 - **Email:** user@chatweb.com
 - **Password:** password
+- **Features:** Standard user access (no IP restrictions by default)
+
+> **Note:** For testing IP whitelist features, additional test users are available via the `IpWhitelistTestSeeder`. See [documentation](./docs/IP_WHITELIST_COMPLETE_GUIDE.md#testing) for details.
 
 ## 📚 API Documentation
 
@@ -494,6 +500,18 @@ await axios.post(`/api/chat-rooms/${roomId}/messages`, {
     type: 'text'
 });
 ```
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+- **📖 [Complete Documentation Index](./docs/README.md)** - Overview of all available documentation
+- **🔒 [IP Whitelist Management Guide](./docs/IP_WHITELIST_COMPLETE_GUIDE.md)** - Complete guide for IP access control feature
+
+### Quick Links
+- **For Administrators:** [IP Whitelist Usage Examples](./docs/IP_WHITELIST_COMPLETE_GUIDE.md#usage-examples)
+- **For Developers:** [API Documentation](./docs/IP_WHITELIST_COMPLETE_GUIDE.md#api-documentation)
+- **For Troubleshooting:** [Common Issues & Solutions](./docs/IP_WHITELIST_COMPLETE_GUIDE.md#troubleshooting)
 
 ## 🚀 Deployment
 

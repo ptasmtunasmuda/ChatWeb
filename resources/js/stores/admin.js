@@ -193,6 +193,87 @@ export const useAdminStore = defineStore('admin', () => {
         }
     };
 
+    // IP Whitelist Management
+    const getCurrentUserIp = async () => {
+        try {
+            const response = await axios.get('/api/admin/current-ip');
+            return { success: true, data: response.data };
+        } catch (error) {
+            console.error('Error getting current IP:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to get current IP' };
+        }
+    };
+
+    const updateUserIpWhitelist = async (userId, allowedIps) => {
+        try {
+            const response = await axios.put(`/api/admin/users/${userId}/ip-whitelist`, {
+                allowed_ips: allowedIps
+            });
+            
+            // Update user in the users array
+            const index = users.value.findIndex(user => user.id === userId);
+            if (index !== -1) {
+                users.value[index].allowed_ips = response.data.allowed_ips;
+            }
+            
+            // Update current user if it's the same user
+            if (currentUser.value?.user?.id === userId) {
+                currentUser.value.user.allowed_ips = response.data.allowed_ips;
+            }
+            
+            return { success: true, allowedIps: response.data.allowed_ips };
+        } catch (error) {
+            console.error('Error updating IP whitelist:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to update IP whitelist', errors: error.response?.data?.errors };
+        }
+    };
+
+    const addIpToWhitelist = async (userId, ip) => {
+        try {
+            const response = await axios.post(`/api/admin/users/${userId}/ip-whitelist/add`, { ip });
+            
+            // Update user in the users array
+            const index = users.value.findIndex(user => user.id === userId);
+            if (index !== -1) {
+                users.value[index].allowed_ips = response.data.allowed_ips;
+            }
+            
+            // Update current user if it's the same user
+            if (currentUser.value?.user?.id === userId) {
+                currentUser.value.user.allowed_ips = response.data.allowed_ips;
+            }
+            
+            return { success: true, allowedIps: response.data.allowed_ips };
+        } catch (error) {
+            console.error('Error adding IP to whitelist:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to add IP to whitelist', errors: error.response?.data?.errors };
+        }
+    };
+
+    const removeIpFromWhitelist = async (userId, ip) => {
+        try {
+            const response = await axios.delete(`/api/admin/users/${userId}/ip-whitelist/remove`, { 
+                data: { ip } 
+            });
+            
+            // Update user in the users array
+            const index = users.value.findIndex(user => user.id === userId);
+            if (index !== -1) {
+                users.value[index].allowed_ips = response.data.allowed_ips;
+            }
+            
+            // Update current user if it's the same user
+            if (currentUser.value?.user?.id === userId) {
+                currentUser.value.user.allowed_ips = response.data.allowed_ips;
+            }
+            
+            return { success: true, allowedIps: response.data.allowed_ips };
+        } catch (error) {
+            console.error('Error removing IP from whitelist:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to remove IP from whitelist', errors: error.response?.data?.errors };
+        }
+    };
+
     // Chat Room Management Actions
     const fetchChatRooms = async (params = {}) => {
         chatRoomsLoading.value = true;
@@ -383,6 +464,12 @@ export const useAdminStore = defineStore('admin', () => {
         restoreUser,
         bulkUserAction,
         fetchDeletedUsers,
+
+        // IP Whitelist Management
+        getCurrentUserIp,
+        updateUserIpWhitelist,
+        addIpToWhitelist,
+        removeIpFromWhitelist,
 
         // Chat Room Management
         fetchChatRooms,

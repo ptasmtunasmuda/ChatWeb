@@ -141,6 +141,9 @@
                   Status
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                  IP Access
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                   Activity
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
@@ -154,7 +157,7 @@
             <tbody class="bg-white divide-y divide-secondary-200">
               <!-- Loading -->
               <tr v-if="loading">
-                <td colspan="7" class="px-6 py-12 text-center">
+                <td colspan="8" class="px-6 py-12 text-center">
                   <div class="flex items-center justify-center">
                     <div class="spinner mr-3"></div>
                     <span class="text-secondary-600">Loading users...</span>
@@ -164,7 +167,7 @@
 
               <!-- No Users -->
               <tr v-else-if="users.length === 0">
-                <td colspan="7" class="px-6 py-12 text-center">
+                <td colspan="8" class="px-6 py-12 text-center">
                   <svg class="mx-auto h-12 w-12 text-secondary-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                   </svg>
@@ -209,6 +212,24 @@
                   }">
                     {{ user.is_online ? 'Online' : 'Offline' }}
                   </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center space-x-2">
+                    <span v-if="!user.allowed_ips || user.allowed_ips.length === 0" 
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"></path>
+                      </svg>
+                      Any IP
+                    </span>
+                    <span v-else 
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                      </svg>
+                      {{ user.allowed_ips.length }} IP(s)
+                    </span>
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
                   <div>{{ user.messages_count || 0 }} messages</div>
@@ -303,6 +324,7 @@
       :user="selectedUser"
       @close="showUserDetailsModal = false"
       @edit="handleEditFromDetails"
+      @updated="handleUserUpdatedFromDetails"
     />
   </div>
 </template>
@@ -448,6 +470,18 @@ const handleUserUpdated = (user) => {
   showEditUserModal.value = false;
   notificationStore.success('Success', 'User updated successfully');
   fetchUsers();
+};
+
+// Handle user update from details modal (IP whitelist changes)
+const handleUserUpdatedFromDetails = (updatedUser) => {
+  // Update the selectedUser with new data
+  selectedUser.value = updatedUser;
+  
+  // Update the user in the users list
+  const userIndex = users.value.findIndex(u => u.id === updatedUser.id);
+  if (userIndex !== -1) {
+    users.value[userIndex] = { ...users.value[userIndex], ...updatedUser };
+  }
 };
 
 const handleEditFromDetails = (user) => {

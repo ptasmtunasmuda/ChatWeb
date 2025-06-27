@@ -117,6 +117,12 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::delete('users/{id}/force', [App\Http\Controllers\Admin\AdminUserController::class, 'forceDelete']);
         Route::post('users/bulk-action', [App\Http\Controllers\Admin\AdminUserController::class, 'bulkAction']);
         Route::get('users-deleted', [App\Http\Controllers\Admin\AdminUserController::class, 'getDeletedUsers']);
+        
+        // IP Whitelist management
+        Route::put('users/{id}/ip-whitelist', [App\Http\Controllers\Admin\AdminUserController::class, 'updateIpWhitelist']);
+        Route::post('users/{id}/ip-whitelist/add', [App\Http\Controllers\Admin\AdminUserController::class, 'addIpToWhitelist']);
+        Route::delete('users/{id}/ip-whitelist/remove', [App\Http\Controllers\Admin\AdminUserController::class, 'removeIpFromWhitelist']);
+        Route::get('current-ip', [App\Http\Controllers\Admin\AdminUserController::class, 'getCurrentUserIp']);
 
         // Chat management
         Route::get('chat-rooms', [App\Http\Controllers\Admin\AdminChatController::class, 'index']);

@@ -11,6 +11,7 @@
           </button>
         </div>
       </div>
+      
       <div class="p-6">
         <div v-if="user" class="space-y-6">
           <!-- User Profile -->
@@ -34,94 +35,142 @@
                 }">
                   {{ user.is_active ? 'Active' : 'Inactive' }}
                 </span>
+                <span v-if="user.allowed_ips && user.allowed_ips.length > 0" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  IP Restricted
+                </span>
               </div>
             </div>
           </div>
 
-          <!-- User Stats -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <div class="text-2xl font-bold text-blue-600">{{ user.chat_rooms_count || 0 }}</div>
-              <div class="text-sm text-blue-600">Chat Rooms</div>
-            </div>
-            <div class="bg-green-50 p-4 rounded-lg">
-              <div class="text-2xl font-bold text-green-600">{{ user.messages_count || 0 }}</div>
-              <div class="text-sm text-green-600">Messages</div>
-            </div>
-            <div class="bg-blue-50 p-4 rounded-lg">
-              <div class="text-2xl font-bold text-blue-600">{{ formatDate(user.last_seen_at) }}</div>
-              <div class="text-sm text-blue-600">Last Seen</div>
-            </div>
-            <div class="bg-orange-50 p-4 rounded-lg">
-              <div class="text-2xl font-bold text-orange-600">{{ formatDate(user.created_at) }}</div>
-              <div class="text-sm text-orange-600">Joined</div>
-            </div>
+          <!-- Tabs -->
+          <div class="border-b border-secondary-200">
+            <nav class="-mb-px flex space-x-8">
+              <button
+                v-for="tab in tabs"
+                :key="tab.id"
+                @click="activeTab = tab.id"
+                class="py-2 px-1 border-b-2 font-medium text-sm"
+                :class="{
+                  'border-primary-500 text-primary-600': activeTab === tab.id,
+                  'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300': activeTab !== tab.id
+                }"
+              >
+                {{ tab.name }}
+              </button>
+            </nav>
           </div>
 
-          <!-- User Information -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h5 class="text-lg font-semibold text-secondary-900 mb-3">Account Information</h5>
-              <div class="space-y-3">
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">User ID</label>
-                  <p class="text-secondary-900">{{ user.id }}</p>
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- Overview Tab -->
+            <div v-show="activeTab === 'overview'" class="space-y-6">
+              <!-- User Stats -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                  <div class="text-2xl font-bold text-blue-600">{{ user.chat_rooms_count || 0 }}</div>
+                  <div class="text-sm text-blue-600">Chat Rooms</div>
                 </div>
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">Email Verified</label>
-                  <p class="text-secondary-900">{{ user.email_verified_at ? 'Yes' : 'No' }}</p>
+                <div class="bg-green-50 p-4 rounded-lg">
+                  <div class="text-2xl font-bold text-green-600">{{ user.messages_count || 0 }}</div>
+                  <div class="text-sm text-green-600">Messages</div>
                 </div>
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">Account Status</label>
-                  <p class="text-secondary-900">{{ user.is_active ? 'Active' : 'Inactive' }}</p>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                  <div class="text-2xl font-bold text-blue-600">{{ formatDate(user.last_seen_at) }}</div>
+                  <div class="text-sm text-blue-600">Last Seen</div>
                 </div>
-              </div>
-            </div>
-            <div>
-              <h5 class="text-lg font-semibold text-secondary-900 mb-3">Activity</h5>
-              <div class="space-y-3">
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">Last Activity</label>
-                  <p class="text-secondary-900">{{ formatDateTime(user.last_seen_at) }}</p>
-                </div>
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">Registration Date</label>
-                  <p class="text-secondary-900">{{ formatDateTime(user.created_at) }}</p>
-                </div>
-                <div>
-                  <label class="text-sm font-medium text-secondary-700">Last Updated</label>
-                  <p class="text-secondary-900">{{ formatDateTime(user.updated_at) }}</p>
+                <div class="bg-orange-50 p-4 rounded-lg">
+                  <div class="text-2xl font-bold text-orange-600">{{ formatDate(user.created_at) }}</div>
+                  <div class="text-sm text-orange-600">Joined</div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Recent Activity -->
-          <div v-if="user.recent_messages && user.recent_messages.length > 0">
-            <h5 class="text-lg font-semibold text-secondary-900 mb-3">Recent Messages</h5>
-            <div class="space-y-2 max-h-40 overflow-y-auto">
-              <div v-for="message in user.recent_messages" :key="message.id" class="p-3 bg-secondary-50 rounded-lg">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <p class="text-sm text-secondary-900">{{ message.content }}</p>
-                    <p class="text-xs text-secondary-500 mt-1">in {{ message.chat_room?.name }}</p>
+              <!-- User Information -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h5 class="text-lg font-semibold text-secondary-900 mb-3">Account Information</h5>
+                  <div class="space-y-3">
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">User ID</label>
+                      <p class="text-secondary-900">{{ user.id }}</p>
+                    </div>
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">Email Verified</label>
+                      <p class="text-secondary-900">{{ user.email_verified_at ? 'Yes' : 'No' }}</p>
+                    </div>
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">Account Status</label>
+                      <p class="text-secondary-900">{{ user.is_active ? 'Active' : 'Inactive' }}</p>
+                    </div>
                   </div>
-                  <span class="text-xs text-secondary-500">{{ formatDateTime(message.created_at) }}</span>
+                </div>
+                <div>
+                  <h5 class="text-lg font-semibold text-secondary-900 mb-3">Activity</h5>
+                  <div class="space-y-3">
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">Last Activity</label>
+                      <p class="text-secondary-900">{{ formatDateTime(user.last_seen_at) }}</p>
+                    </div>
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">Registration Date</label>
+                      <p class="text-secondary-900">{{ formatDateTime(user.created_at) }}</p>
+                    </div>
+                    <div>
+                      <label class="text-sm font-medium text-secondary-700">Last Updated</label>
+                      <p class="text-secondary-900">{{ formatDateTime(user.updated_at) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Activity -->
+              <div v-if="user.recent_messages && user.recent_messages.length > 0">
+                <h5 class="text-lg font-semibold text-secondary-900 mb-3">Recent Messages</h5>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                  <div v-for="message in user.recent_messages" :key="message.id" class="p-3 bg-secondary-50 rounded-lg">
+                    <div class="flex justify-between items-start">
+                      <div class="flex-1">
+                        <p class="text-sm text-secondary-900">{{ message.content }}</p>
+                        <p class="text-xs text-secondary-500 mt-1">in {{ message.chat_room?.name }}</p>
+                      </div>
+                      <span class="text-xs text-secondary-500">{{ formatDateTime(message.created_at) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Recent Chat Rooms -->
+              <div v-if="user.recent_chat_rooms && user.recent_chat_rooms.length > 0">
+                <h5 class="text-lg font-semibold text-secondary-900 mb-3">Recent Chat Rooms</h5>
+                <div class="space-y-2">
+                  <div v-for="room in user.recent_chat_rooms" :key="room.id" class="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
+                    <div>
+                      <p class="font-medium text-secondary-900">{{ room.name }}</p>
+                      <p class="text-sm text-secondary-500">{{ room.type }} • {{ room.participants_count }} participants</p>
+                    </div>
+                    <span class="text-xs text-secondary-500">{{ formatDateTime(room.updated_at) }}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Recent Chat Rooms -->
-          <div v-if="user.recent_chat_rooms && user.recent_chat_rooms.length > 0">
-            <h5 class="text-lg font-semibold text-secondary-900 mb-3">Recent Chat Rooms</h5>
-            <div class="space-y-2">
-              <div v-for="room in user.recent_chat_rooms" :key="room.id" class="flex items-center justify-between p-3 bg-secondary-50 rounded-lg">
-                <div>
-                  <p class="font-medium text-secondary-900">{{ room.name }}</p>
-                  <p class="text-sm text-secondary-500">{{ room.type }} • {{ room.participants_count }} participants</p>
+            <!-- IP Whitelist Tab -->
+            <div v-show="activeTab === 'ip-whitelist'">
+              <IpWhitelistManager 
+                :user="user" 
+                @updated="handleUserUpdate"
+              />
+            </div>
+
+            <!-- Activity Tab -->
+            <div v-show="activeTab === 'activity'">
+              <div class="space-y-6">
+                <h5 class="text-lg font-semibold text-secondary-900">Activity Log</h5>
+                <div class="text-center py-8 text-secondary-500">
+                  <svg class="w-12 h-12 mx-auto mb-3 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                  <p class="text-sm">Activity logs feature coming soon</p>
                 </div>
-                <span class="text-xs text-secondary-500">{{ formatDateTime(room.updated_at) }}</span>
               </div>
             </div>
           </div>
@@ -137,8 +186,19 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
+import IpWhitelistManager from './IpWhitelistManager.vue';
+
 const props = defineProps(['user']);
-const emit = defineEmits(['close', 'edit']);
+const emit = defineEmits(['close', 'edit', 'updated']);
+
+const activeTab = ref('overview');
+
+const tabs = [
+  { id: 'overview', name: 'Overview' },
+  { id: 'ip-whitelist', name: 'IP Whitelist' },
+  { id: 'activity', name: 'Activity' }
+];
 
 const formatDate = (dateString) => {
   if (!dateString) return 'Never';
@@ -164,6 +224,10 @@ const formatDateTime = (dateString) => {
 
 const editUser = () => {
   emit('edit', props.user);
+};
+
+const handleUserUpdate = (updatedUser) => {
+  emit('updated', updatedUser);
 };
 </script>
 

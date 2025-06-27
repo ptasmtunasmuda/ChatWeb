@@ -142,6 +142,9 @@ class AdminUserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:user,admin',
+            'is_active' => 'sometimes|boolean',
+            'allowed_ips' => 'sometimes|nullable|array',
+            'allowed_ips.*' => 'ip',
         ]);
 
         if ($validator->fails()) {
@@ -151,13 +154,30 @@ class AdminUserController extends Controller
             ], 422);
         }
 
-        $user = User::create([
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'email_verified_at' => now(),
-        ]);
+            'is_active' => $request->get('is_active', true),
+        ];
+
+        // Handle IP whitelist
+        if ($request->has('allowed_ips')) {
+            $allowedIps = $request->allowed_ips;
+            
+            // Remove empty values and duplicates
+            if (is_array($allowedIps)) {
+                $allowedIps = array_values(array_unique(array_filter($allowedIps, function($ip) {
+                    return !empty(trim($ip));
+                })));
+            }
+            
+            $userData['allowed_ips'] = empty($allowedIps) ? null : $allowedIps;
+        }
+
+        $user = User::create($userData);
 
         return response()->json([
             'message' => 'User created successfully',
@@ -174,6 +194,9 @@ class AdminUserController extends Controller
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|nullable|string|min:8|confirmed',
             'role' => 'sometimes|required|in:user,admin',
+            'is_active' => 'sometimes|boolean',
+            'allowed_ips' => 'sometimes|nullable|array',
+            'allowed_ips.*' => 'ip',
         ]);
 
         if ($validator->fails()) {
@@ -183,10 +206,24 @@ class AdminUserController extends Controller
             ], 422);
         }
 
-        $updateData = $request->only(['name', 'email', 'role']);
+        $updateData = $request->only(['name', 'email', 'role', 'is_active']);
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->password);
+        }
+
+        // Handle IP whitelist
+        if ($request->has('allowed_ips')) {
+            $allowedIps = $request->allowed_ips;
+            
+            // Remove empty values and duplicates
+            if (is_array($allowedIps)) {
+                $allowedIps = array_values(array_unique(array_filter($allowedIps, function($ip) {
+                    return !empty(trim($ip));
+                })));
+            }
+            
+            $updateData['allowed_ips'] = empty($allowedIps) ? null : $allowedIps;
         }
 
         $user->update($updateData);
@@ -310,5 +347,123 @@ class AdminUserController extends Controller
         $deletedUsers = $query->orderBy('deleted_at', 'desc')->paginate($perPage);
 
         return response()->json($deletedUsers);
+    }
+
+    /**
+     * Update IP whitelist for a user
+     */
+    public function updateIpWhitelist(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'allowed_ips' => 'nullable|array',
+            'allowed_ips.*' => 'ip',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $allowedIps = $request->allowed_ips;
+
+        // Remove empty values and duplicates
+        if (is_array($allowedIps)) {
+            $allowedIps = array_values(array_unique(array_filter($allowedIps, function($ip) {
+                return !empty(trim($ip));
+            })));
+        }
+
+        $user->update([
+            'allowed_ips' => empty($allowedIps) ? null : $allowedIps
+        ]);
+
+        return response()->json([
+            'message' => 'IP whitelist updated successfully',
+            'user' => $user->fresh(),
+            'allowed_ips' => $user->allowed_ips
+        ]);
+    }
+
+    /**
+     * Add IP to user's whitelist
+     */
+    public function addIpToWhitelist(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'ip' => 'required|ip',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $currentIps = $user->allowed_ips ?? [];
+        $newIp = $request->ip;
+
+        if (!in_array($newIp, $currentIps)) {
+            $currentIps[] = $newIp;
+            $user->update(['allowed_ips' => $currentIps]);
+        }
+
+        return response()->json([
+            'message' => 'IP added to whitelist successfully',
+            'user' => $user->fresh(),
+            'allowed_ips' => $user->allowed_ips
+        ]);
+    }
+
+    /**
+     * Remove IP from user's whitelist
+     */
+    public function removeIpFromWhitelist(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'ip' => 'required|ip',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $currentIps = $user->allowed_ips ?? [];
+        $ipToRemove = $request->ip;
+
+        $currentIps = array_values(array_filter($currentIps, function($ip) use ($ipToRemove) {
+            return $ip !== $ipToRemove;
+        }));
+
+        $user->update(['allowed_ips' => empty($currentIps) ? null : $currentIps]);
+
+        return response()->json([
+            'message' => 'IP removed from whitelist successfully',
+            'user' => $user->fresh(),
+            'allowed_ips' => $user->allowed_ips
+        ]);
+    }
+
+    /**
+     * Get user's current IP (for easy addition to whitelist)
+     */
+    public function getCurrentUserIp(Request $request)
+    {
+        return response()->json([
+            'current_ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'timestamp' => now()->toISOString()
+        ]);
     }
 }
