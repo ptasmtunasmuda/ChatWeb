@@ -1,30 +1,30 @@
 <template>
-  <div class="bg-white border-t border-gray-200 px-4 py-3 relative">
+  <div class="bg-white border-t border-gray-200 px-2 sm:px-3 lg:px-4 py-2 sm:py-3 relative">
     <!-- Editing Mode Indicator -->
     <div v-if="props.editingMessage" class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-2">
-          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center space-x-1 sm:space-x-2">
+          <svg class="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
           </svg>
-          <span class="text-sm text-blue-700 font-medium">Editing message</span>
+          <span class="text-xs sm:text-sm text-blue-700 font-medium">Editing message</span>
         </div>
         <button @click="cancelEdit" class="text-blue-600 hover:text-blue-800">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
     </div>
 
-    <div class="flex items-end space-x-3 max-w-4xl mx-auto">
+    <div class="flex items-end space-x-2 sm:space-x-3 max-w-4xl mx-auto">
       <!-- File Upload Button -->
       <button
         @click="$refs.fileInput.click()"
-        class="flex-shrink-0 w-10 h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+        class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 hover:bg-gray-100 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
         title="Attach file"
       >
-        <svg class="w-5 h-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 hover:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
         </svg>
       </button>
@@ -32,13 +32,13 @@
       <!-- Message Input -->
       <div class="flex-1 relative">
         <!-- Reply indicator -->
-        <div v-if="replyToMessage" class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-          <div class="flex-1">
+        <div v-if="replyToMessage" class="mb-1 sm:mb-2 p-1.5 sm:p-2 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+          <div class="flex-1 min-w-0">
             <p class="text-xs text-blue-600 font-medium">Replying to {{ replyToMessage.user.name }}</p>
-            <p class="text-sm text-gray-700 truncate">{{ replyToMessage.content }}</p>
+            <p class="text-xs sm:text-sm text-gray-700 truncate">{{ replyToMessage.content }}</p>
           </div>
-          <button @click="clearReply" class="ml-2 text-gray-400 hover:text-gray-600">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="clearReply" class="ml-1 sm:ml-2 text-gray-400 hover:text-gray-600 flex-shrink-0">
+            <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -55,7 +55,7 @@
             @blur="handleBlur"
             placeholder="Type a message..."
             rows="1"
-            class="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 placeholder-gray-400"
+            class="w-full px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 bg-gray-50 border border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:bg-white resize-none transition-all duration-200 placeholder-gray-400 text-sm sm:text-base"
             :class="{ 'border-red-300 focus:ring-red-500': error }"
             :disabled="disabled"
           ></textarea>
@@ -63,20 +63,20 @@
           <!-- Emoji Button -->
           <button
             @click="toggleEmojiPicker"
-            class="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
+            class="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 text-gray-400 hover:text-gray-600 transition-all duration-200 hover:scale-110"
             title="Add emoji"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </button>
         </div>
 
         <!-- Error message -->
-        <p v-if="error" class="mt-1 text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" class="mt-1 text-xs sm:text-sm text-red-600">{{ error }}</p>
 
         <!-- File preview -->
-        <div v-if="selectedFiles.length > 0" class="mt-2 space-y-2">
+        <div v-if="selectedFiles.length > 0" class="mt-1 sm:mt-2 space-y-1 sm:space-y-2">
           <div
             v-for="(file, index) in selectedFiles"
             :key="index"
@@ -105,16 +105,16 @@
       <button
         @click="sendMessage"
         :disabled="!canSend || sending"
-        class="flex-shrink-0 w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg hover:shadow-xl"
+        class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 shadow-lg hover:shadow-xl"
       >
-        <svg v-if="sending" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+        <svg v-if="sending" class="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
-        <svg v-else-if="props.editingMessage" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-else-if="props.editingMessage" class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
         </svg>
-        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg v-else class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
         </svg>
       </button>
@@ -132,12 +132,12 @@
 
     <!-- Emoji Picker -->
     <div v-if="showEmojiPicker" :class="emojiPickerClasses">
-      <div class="grid grid-cols-8 gap-1">
+      <div class="grid grid-cols-6 sm:grid-cols-8 gap-1">
         <button
           v-for="emoji in commonEmojis"
           :key="emoji"
           @click="insertEmoji(emoji)"
-          class="p-2 hover:bg-gray-100 rounded-lg text-lg transition-all duration-200 hover:scale-110"
+          class="p-1 sm:p-2 hover:bg-gray-100 rounded-lg text-base sm:text-lg transition-all duration-200 hover:scale-110"
         >
           {{ emoji }}
         </button>

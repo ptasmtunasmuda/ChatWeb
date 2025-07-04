@@ -1,16 +1,43 @@
 <template>
-  <div class="h-screen bg-gray-50 flex overflow-hidden">
+  <div class="h-screen bg-gray-50 flex overflow-hidden relative">
+    <!-- Mobile Overlay -->
+    <div
+      v-if="isMobileMenuOpen"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+      @click="closeMobileMenu"
+    ></div>
+
     <!-- Chat Rooms Sidebar -->
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+    <div
+      class="bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out z-50"
+      :class="{
+        // Mobile: Full screen overlay
+        'fixed inset-y-0 left-0 w-full sm:w-80 transform': true,
+        'translate-x-0': isMobileMenuOpen,
+        '-translate-x-full lg:translate-x-0': !isMobileMenuOpen,
+        // Desktop: Normal sidebar
+        'lg:relative lg:w-80 xl:w-96 2xl:w-[400px]': true
+      }"
+    >
       <!-- Sidebar Header -->
-      <div class="p-4 border-b border-gray-200">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center">
+      <div class="p-3 sm:p-4 border-b border-gray-200">
+        <div class="flex items-center justify-between mb-3 sm:mb-4">
+          <!-- Mobile Close Button -->
+          <button
+            @click="closeMobileMenu"
+            class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+
+          <div class="flex items-center flex-1 lg:flex-none">
             <!-- User Avatar -->
             <div class="relative">
               <div
                 v-if="authStore.user?.avatar"
-                class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
               >
                 <img
                   :src="authStore.user.avatar"
@@ -20,28 +47,28 @@
               </div>
               <div
                 v-else
-                class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base"
               >
                 {{ authStore.user?.name?.charAt(0).toUpperCase() || 'A' }}
               </div>
             </div>
-            <div class="ml-3">
-              <p class="font-semibold text-gray-900">{{ authStore.user?.name }}</p>
-              <p class="text-sm text-gray-500">ChatWeb</p>
+            <div class="ml-2 sm:ml-3 flex-1 min-w-0">
+              <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{{ authStore.user?.name }}</p>
+              <p class="text-xs sm:text-sm text-gray-500">ChatWeb</p>
             </div>
           </div>
           <div class="relative dropdown-container">
             <button
               @click="dropdownOpen = !dropdownOpen"
-              class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              class="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
-              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
               </svg>
             </button>
             <div
               v-if="dropdownOpen"
-              class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-10 overflow-hidden"
+              class="absolute right-0 mt-2 w-48 sm:w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-10 overflow-hidden"
             >
               <div class="py-2">
                 <!-- Profile -->
@@ -125,26 +152,26 @@
             v-model="searchQuery"
             type="text"
             :placeholder="currentView === 'contacts' ? 'Search contacts...' : 'Search chats...'"
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+            class="w-full pl-8 sm:pl-10 pr-3 sm:pr-4 py-2 sm:py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             @input="handleSearch"
           />
-          <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-2.5 sm:left-3 top-2 sm:top-2.5 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
       </div>
 
       <!-- Navigation -->
-      <div class="px-4 py-3 border-b border-gray-200">
-        <div class="grid grid-cols-4 gap-2 text-sm">
+      <div class="px-2 sm:px-4 py-2 sm:py-3 border-b border-gray-200">
+        <div class="grid grid-cols-4 gap-1 sm:gap-2 text-xs sm:text-sm">
           <button
             @click="currentView = 'chats'"
             :class="[
-              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              'flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-colors',
               currentView === 'chats' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <span class="text-xs font-medium">Chats</span>
@@ -152,11 +179,11 @@
           <button
             @click="currentView = 'calls'"
             :class="[
-              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              'flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-colors',
               currentView === 'calls' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
             </svg>
             <span class="text-xs font-medium">Calls</span>
@@ -164,11 +191,11 @@
           <button
             @click="currentView = 'contacts'"
             :class="[
-              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              'flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-colors',
               currentView === 'contacts' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span class="text-xs font-medium">Contacts</span>
@@ -176,11 +203,11 @@
           <button
             @click="currentView = 'notifications'"
             :class="[
-              'flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-colors',
+              'flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-lg transition-colors',
               currentView === 'notifications' ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-blue-600 hover:bg-gray-50'
             ]"
           >
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 sm:mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.0001 9.7041V9C19.0001 5.13401 15.8661 2 12.0001 2C8.13407 2 5.00006 5.13401 5.00006 9V9.7041C5.00006 10.5491 4.74995 11.3752 4.28123 12.0783L3.13263 13.8012C2.08349 15.3749 2.88442 17.5139 4.70913 18.0116C9.48258 19.3134 14.5175 19.3134 19.291 18.0116C21.1157 17.5139 21.9166 15.3749 20.8675 13.8012L19.7189 12.0783C19.2502 11.3752 19.0001 10.5491 19.0001 9.7041Z" />
               <path opacity="0.5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7.5 19C8.15503 20.7478 9.92246 22 12 22C14.0775 22 15.845 20.7478 16.5 19" />
             </svg>
@@ -194,39 +221,39 @@
         <!-- Chats Tab -->
         <div v-if="currentView === 'chats'">
           <!-- Create New Chat Button -->
-          <div class="p-4 border-b border-gray-200">
+          <div class="p-3 sm:p-4 border-b border-gray-200">
             <button
               @click="showCreateRoomModal = true"
-              class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              class="w-full flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
-              <span class="font-medium">Create New Chat</span>
+              <span class="font-medium text-sm sm:text-base">Create New Chat</span>
             </button>
           </div>
 
-          <div v-if="chatStore.loading" class="p-4 space-y-4">
+          <div v-if="chatStore.loading" class="p-3 sm:p-4 space-y-3 sm:space-y-4">
             <div v-for="i in 5" :key="i" class="animate-pulse">
-              <div class="flex items-center space-x-3 p-3">
-                <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
-                <div class="flex-1 space-y-2">
-                  <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div class="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded-full"></div>
+                <div class="flex-1 space-y-1 sm:space-y-2">
+                  <div class="h-3 sm:h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div class="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div v-else-if="filteredChatRooms.length === 0" class="p-6 text-center">
-            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div v-else-if="filteredChatRooms.length === 0" class="p-4 sm:p-6 text-center">
+            <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
             </svg>
             <h3 class="text-sm font-medium text-gray-900 mb-1">No chats found</h3>
-            <p class="text-sm text-gray-500 mb-4">Start a new conversation</p>
+            <p class="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Start a new conversation</p>
             <button
               @click="showCreateRoomModal = true"
-              class="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              class="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -241,15 +268,15 @@
               :key="room.id"
               @click="selectChatRoom(room)"
               :class="[
-                'w-full p-4 flex items-center hover:bg-gray-50 transition-colors',
+                'w-full p-3 sm:p-4 flex items-center hover:bg-gray-50 transition-colors',
                 selectedChatRoom?.id === room.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
               ]"
             >
-              <div class="relative">
+              <div class="relative flex-shrink-0">
                 <!-- Chat Avatar -->
                 <div
                   v-if="getChatAvatar(room)"
-                  class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                  class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm"
                 >
                   <img
                     :src="getChatAvatar(room)"
@@ -259,7 +286,7 @@
                 </div>
                 <div
                   v-else
-                  class="w-12 h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                  class="w-10 h-10 sm:w-12 sm:h-12 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base"
                 >
                   {{ getChatAvatarInitial(room) }}
                 </div>
@@ -267,23 +294,23 @@
                 <!-- Online indicator for private chats -->
                 <div
                   v-if="isOtherParticipantOnline(room)"
-                  class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
+                  class="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white"
                 ></div>
                 <!-- Unread count badge -->
                 <div
                   v-if="room.unread_count > 0"
-                  class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
+                  class="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
                 >
                   {{ room.unread_count > 9 ? '9+' : room.unread_count }}
                 </div>
               </div>
-              <div class="ml-3 flex-1 text-left">
-                <div class="flex items-center space-x-2">
-                  <p class="font-semibold text-gray-900">{{ getChatDisplayName(room) }}</p>
+              <div class="ml-2 sm:ml-3 flex-1 text-left min-w-0">
+                <div class="flex items-center space-x-1 sm:space-x-2">
+                  <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{{ getChatDisplayName(room) }}</p>
                   <!-- Group Badge -->
-                  <span 
-                    v-if="room.type === 'group'" 
-                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0"
+                  <span
+                    v-if="room.type === 'group'"
+                    class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0"
                     title="Group Chat"
                   >
                     <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,10 +318,20 @@
                     </svg>
                     Group
                   </span>
+                  <!-- Mobile Group Icon -->
+                  <svg
+                    v-if="room.type === 'group'"
+                    class="sm:hidden w-3 h-3 text-blue-600 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
                 </div>
-                <p class="text-sm text-gray-500 truncate">{{ getLatestMessageDisplay(room.latest_message) }}</p>
+                <p class="text-xs sm:text-sm text-gray-500 truncate">{{ getLatestMessageDisplay(room.latest_message) }}</p>
               </div>
-              <div class="text-xs text-gray-500">{{ formatTime(room.updated_at) }}</div>
+              <div class="text-xs text-gray-500 flex-shrink-0">{{ formatTime(room.updated_at) }}</div>
             </button>
           </div>
         </div>
@@ -308,21 +345,21 @@
         />
 
         <!-- Calls Tab -->
-        <div v-else-if="currentView === 'calls'" class="p-6 text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="currentView === 'calls'" class="p-4 sm:p-6 text-center">
+          <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
           </svg>
           <h3 class="text-sm font-medium text-gray-900 mb-1">Calls</h3>
-          <p class="text-sm text-gray-500">Call history will appear here</p>
+          <p class="text-xs sm:text-sm text-gray-500">Call history will appear here</p>
         </div>
 
         <!-- Notifications Tab -->
-        <div v-else-if="currentView === 'notifications'" class="p-6 text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div v-else-if="currentView === 'notifications'" class="p-4 sm:p-6 text-center">
+          <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM16 3h5v5h-5V3zM4 3h6v6H4V3z"></path>
           </svg>
           <h3 class="text-sm font-medium text-gray-900 mb-1">Notifications</h3>
-          <p class="text-sm text-gray-500">Your notifications will appear here</p>
+          <p class="text-xs sm:text-sm text-gray-500">Your notifications will appear here</p>
         </div>
       </div>
     </div>
@@ -330,17 +367,17 @@
     <!-- Chat Area -->
     <div class="flex-1 flex flex-col">
       <!-- Welcome Screen -->
-      <div v-if="!currentChatRoom" class="flex-1 flex items-center justify-center bg-white">
+      <div v-if="!currentChatRoom" class="flex-1 flex items-center justify-center bg-white relative">
         <button
-          @click="isShowChatMenu = !isShowChatMenu"
-          class="xl:hidden absolute top-4 left-4 p-2 rounded-lg hover:bg-gray-100"
+          @click="openMobileMenu"
+          class="lg:hidden absolute top-3 left-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div class="text-center">
-          <div class="w-64 h-64 mb-8 mx-auto">
+        <div class="text-center px-4">
+          <div class="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 mb-6 sm:mb-8 mx-auto">
             <svg viewBox="0 0 400 400" class="w-full h-full text-gray-300">
               <circle cx="200" cy="200" r="180" fill="currentColor" opacity="0.1"/>
               <svg x="176" y="176" class="w-12 h-12" fill="currentColor" opacity="0.3" viewBox="0 0 24 24">
@@ -348,11 +385,11 @@
               </svg>
             </svg>
           </div>
-          <div class="flex items-center justify-center bg-gray-100 px-6 py-3 rounded-lg max-w-xs mx-auto">
-            <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center justify-center bg-gray-100 px-4 sm:px-6 py-2 sm:py-3 rounded-lg max-w-xs mx-auto">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span class="font-semibold text-gray-700">Click User To Chat</span>
+            <span class="font-semibold text-gray-700 text-sm sm:text-base">Select a chat to start</span>
           </div>
         </div>
       </div>
@@ -360,32 +397,32 @@
       <!-- Chat Interface -->
       <div v-else class="flex-1 flex flex-col h-full relative">
         <!-- Chat Header -->
-        <div class="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+        <div class="bg-white border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3 flex-shrink-0">
           <div class="flex items-center justify-between">
-            <div class="flex items-center">
+            <div class="flex items-center flex-1 min-w-0">
               <button
-                @click="isShowChatMenu = !isShowChatMenu"
-                class="xl:hidden mr-3 p-2 rounded-lg hover:bg-gray-100"
+                @click="openMobileMenu"
+                class="lg:hidden mr-2 sm:mr-3 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              
+
               <!-- Chat Avatar & Info (Clickable for Groups) -->
-              <div 
-                class="flex items-center rounded-lg p-2 -m-2 transition-colors"
-                :class="{ 
+              <div
+                class="flex items-center rounded-lg p-1 sm:p-2 -m-1 sm:-m-2 transition-colors flex-1 min-w-0"
+                :class="{
                   'cursor-pointer hover:bg-gray-50': selectedChatRoom?.type === 'group',
                   'cursor-default': selectedChatRoom?.type !== 'group'
                 }"
                 @click="handleHeaderClick"
               >
-                <div class="relative">
+                <div class="relative flex-shrink-0">
                   <!-- Chat Header Avatar -->
                   <div
                     v-if="getChatAvatar(selectedChatRoom)"
-                    class="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-white shadow-sm"
                   >
                     <img
                       :src="getChatAvatar(selectedChatRoom)"
@@ -395,70 +432,70 @@
                   </div>
                   <div
                     v-else
-                    class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold"
+                    class="w-8 h-8 sm:w-10 sm:h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-base"
                   >
                     {{ getChatAvatarInitial(selectedChatRoom) }}
                   </div>
 
                   <div
                     v-if="isOtherParticipantOnline(selectedChatRoom)"
-                    class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"
+                    class="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white"
                   ></div>
                 </div>
-                <div class="ml-3">
-                  <div class="flex items-center space-x-2">
-                    <p class="font-semibold text-gray-900">{{ getChatDisplayName(selectedChatRoom) }}</p>
+                <div class="ml-2 sm:ml-3 flex-1 min-w-0">
+                  <div class="flex items-center space-x-1 sm:space-x-2">
+                    <p class="font-semibold text-gray-900 text-sm sm:text-base truncate">{{ getChatDisplayName(selectedChatRoom) }}</p>
                     <!-- Group Icon -->
-                    <div 
-                      v-if="selectedChatRoom?.type === 'group'" 
-                      class="flex-shrink-0 w-5 h-5 flex items-center justify-center"
+                    <div
+                      v-if="selectedChatRoom?.type === 'group'"
+                      class="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center"
                     >
-                      <svg 
-                        class="w-4 h-4 text-blue-600" 
-                        fill="none" 
-                        stroke="currentColor" 
+                      <svg
+                        class="w-3 h-3 sm:w-4 sm:h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                       </svg>
                     </div>
                   </div>
-                  <p class="text-sm" :class="getStatusTextClass(selectedChatRoom)">
+                  <p class="text-xs sm:text-sm truncate" :class="getStatusTextClass(selectedChatRoom)">
                     {{ getChatStatusText(selectedChatRoom) }}
                   </p>
                 </div>
               </div>
             </div>
-            <div class="flex space-x-3">
+            <div class="flex space-x-1 sm:space-x-2 lg:space-x-3 flex-shrink-0">
               <!-- Group Info Button (Groups Only) -->
-              <button 
+              <button
                 v-if="selectedChatRoom?.type === 'group'"
                 @click="openGroupInfo"
-                class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors"
+                class="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors"
                 title="Group Info"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
               </button>
-              
-              <!-- Call Button -->
-              <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+              <!-- Call Button (Hidden on small screens) -->
+              <button class="hidden sm:flex p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </button>
-              
-              <!-- Video Call Button -->
-              <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+              <!-- Video Call Button (Hidden on small screens) -->
+              <button class="hidden md:flex p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
               </button>
-              
+
               <!-- More Options -->
-              <button class="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button class="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z" />
                 </svg>
               </button>
@@ -568,6 +605,9 @@ const currentView = ref('chats'); // 'chats', 'calls', 'contacts', 'notification
 const chatMessagesRef = ref(null);
 const showGroupInfoModal = ref(false);
 
+// Mobile responsiveness
+const isMobileMenuOpen = ref(false);
+
 // Notification state
 const notification = ref({
   show: false,
@@ -644,23 +684,23 @@ const formatLastSeenTime = (timestamp) => {
 // Helper function to get status text class for chat header
 const getStatusTextClass = (room) => {
   if (!room) return 'text-gray-500';
-  
+
   if (room.type === 'group') {
     return 'text-gray-500';
   }
-  
+
   return isOtherParticipantOnline(room) ? 'text-green-600' : 'text-gray-500';
 };
 
 // Helper function to get status text for chat header
 const getChatStatusText = (room) => {
   if (!room) return '';
-  
+
   if (room.type === 'group') {
     const memberCount = room.participants?.length || room.active_participants_count || 0;
     return `${memberCount} members`;
   }
-  
+
   // Private chat logic
   const otherParticipant = getOtherParticipant(room);
   if (!otherParticipant) return '';
@@ -723,7 +763,7 @@ const selectChatRoom = async (room) => {
       // Reset unread count when messages are successfully fetched and marked as read
       console.log('📖 Resetting unread count for room:', room.id);
       chatStore.resetUnreadCount(room.id);
-      
+
       // Scroll to bottom after messages are loaded
       setTimeout(() => {
         if (chatMessagesRef.value && chatMessagesRef.value.scrollToBottom) {
@@ -758,7 +798,7 @@ const handleSendMessage = async (messageData) => {
     if (result.conversion_notice) {
       showNotification('warning', 'File Converted', result.conversion_notice.message);
     }
-    
+
     // Scroll to bottom after sending message
     setTimeout(() => {
       if (chatMessagesRef.value && chatMessagesRef.value.scrollToBottom) {
@@ -871,7 +911,7 @@ const handleHeaderClick = () => {
   console.log('🖱️ Header clicked!');
   console.log('📍 Selected chat room:', selectedChatRoom.value);
   console.log('📍 Room type:', selectedChatRoom.value?.type);
-  
+
   if (selectedChatRoom.value?.type === 'group') {
     openGroupInfo();
   } else {
@@ -1158,7 +1198,7 @@ const setupRealTimeListeners = () => {
       .listen('.user.joined.group', (e) => {
         console.log('🎉 User joined group:', e);
         notificationStore.info('Group Update', e.message);
-        
+
         // If it's current user being added, refresh chat rooms
         if (e.member.id === authStore.user.id) {
           chatStore.fetchChatRooms();
@@ -1170,7 +1210,7 @@ const setupRealTimeListeners = () => {
       .listen('.user.left.group', (e) => {
         console.log('👋 User left group:', e);
         notificationStore.info('Group Update', e.message);
-        
+
         // If current user was removed/left, remove from chat list
         if (e.member.id === authStore.user.id) {
           chatStore.removeGroupFromList(e.group.id);
@@ -1185,7 +1225,7 @@ const setupRealTimeListeners = () => {
       .listen('.user.role.changed', (e) => {
         console.log('👑 User role changed:', e);
         notificationStore.info('Group Update', e.message);
-        
+
         // Update member role in current group
         if (currentChatRoom.value?.id === e.group.id) {
           chatStore.updateMemberRole(e.group.id, e.member.id, e.new_role);
@@ -1194,14 +1234,14 @@ const setupRealTimeListeners = () => {
       .listen('.group.info.updated', (e) => {
         console.log('📝 Group info updated:', e);
         notificationStore.info('Group Update', e.message);
-        
+
         // Update group info
         chatStore.updateGroupInfo(e.group.id, e.group);
       })
       .listen('.group.deleted', (e) => {
         console.log('🗑️ Group deleted:', e);
         notificationStore.warning('Group Deleted', e.message);
-        
+
         // Remove group from chat list
         chatStore.removeGroupFromList(e.group.id);
         if (currentChatRoom.value?.id === e.group.id) {
@@ -1377,6 +1417,19 @@ const handleLogout = async () => {
   }
 };
 
+// Mobile menu functions
+const openMobileMenu = () => {
+  isMobileMenuOpen.value = true;
+  // Prevent body scroll when mobile menu is open
+  document.body.style.overflow = 'hidden';
+};
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false;
+  // Restore body scroll
+  document.body.style.overflow = '';
+};
+
 // Handle click outside to close dropdown
 const handleClickOutside = (event) => {
   const dropdown = document.querySelector('.dropdown-container');
@@ -1422,6 +1475,13 @@ watch(dropdownOpen, (isOpen) => {
   }
 });
 
+// Watch current chat room to close mobile menu when chat is selected
+watch(currentChatRoom, (newRoom) => {
+  if (newRoom && isMobileMenuOpen.value) {
+    closeMobileMenu();
+  }
+});
+
 onMounted(async () => {
   await initializeChat();
 
@@ -1439,6 +1499,9 @@ onUnmounted(() => {
     // Clean up dropdown event listeners
     document.removeEventListener('click', handleClickOutside);
     document.removeEventListener('keydown', handleEscKey);
+
+    // Clean up mobile menu
+    closeMobileMenu();
 
     // Stop heartbeat
     if (usersStore && usersStore.stopHeartbeat) {

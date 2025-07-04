@@ -1,29 +1,29 @@
 <template>
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+    <div class="card max-w-sm sm:max-w-lg lg:max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
       <!-- Header -->
-      <div class="p-6 border-b border-gray-200">
+      <div class="p-4 sm:p-6 border-b border-gray-200">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
             <!-- Group Avatar Section -->
-            <div class="relative group">
-              <div 
+            <div class="relative group flex-shrink-0">
+              <div
                 v-if="groupInfo?.avatar"
-                class="w-12 h-12 rounded-full overflow-hidden"
+                class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden"
               >
                 <img :src="groupInfo.avatar" :alt="groupInfo.name" class="w-full h-full object-cover" />
               </div>
-              <div 
+              <div
                 v-else
-                class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-lg"
+                class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-base sm:text-lg"
               >
                 <svg v-if="groupInfo?.type === 'group'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                 </svg>
               </div>
-              
+
               <!-- Avatar Upload Overlay (Admin Only) -->
-              <div 
+              <div
                 v-if="canManage"
                 class="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                 :class="{ 'opacity-100': uploadingAvatar }"
@@ -35,7 +35,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
               </div>
-              
+
               <!-- Hidden File Input -->
               <input
                 ref="avatarInput"
@@ -45,59 +45,59 @@
                 @change="handleAvatarUpload"
               />
             </div>
-            
-            <div class="flex-1">
+
+            <div class="flex-1 min-w-0">
               <!-- Group Name Section -->
-              <div v-if="!editingName" class="flex items-center space-x-2">
-                <h3 class="text-xl font-bold text-gray-900">{{ groupInfo?.name || 'Group Info' }}</h3>
-                <button 
+              <div v-if="!editingName" class="flex items-center space-x-1 sm:space-x-2">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900 truncate">{{ groupInfo?.name || 'Group Info' }}</h3>
+                <button
                   v-if="canManage"
                   @click="startEditName"
-                  class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  class="p-1 text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                   </svg>
                 </button>
               </div>
-              
+
               <!-- Edit Name Input -->
-              <div v-else class="flex items-center space-x-2">
+              <div v-else class="flex items-center space-x-1 sm:space-x-2">
                 <input
                   v-model="editNameText"
                   @keyup.enter="saveName"
                   @keyup.escape="cancelEditName"
-                  class="text-xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none flex-1"
+                  class="text-lg sm:text-xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none flex-1 min-w-0"
                   placeholder="Group name..."
                   maxlength="50"
                 />
                 <button
                   @click="saveName"
                   :disabled="savingName || !editNameText.trim()"
-                  class="p-1 text-green-600 hover:text-green-700 disabled:opacity-50"
+                  class="p-1 text-green-600 hover:text-green-700 disabled:opacity-50 flex-shrink-0"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </button>
                 <button
                   @click="cancelEditName"
-                  class="p-1 text-red-600 hover:text-red-700"
+                  class="p-1 text-red-600 hover:text-red-700 flex-shrink-0"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
                 </button>
               </div>
-              
-              <p class="text-sm text-gray-500">{{ groupInfo?.members_count || 0 }} members</p>
+
+              <p class="text-xs sm:text-sm text-gray-500">{{ groupInfo?.members_count || 0 }} members</p>
             </div>
           </div>
-          <button 
+          <button
             @click="$emit('close')"
-            class="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            class="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
           >
-            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -105,32 +105,32 @@
       </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="p-8 text-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p class="text-gray-500 mt-2">Loading group info...</p>
+      <div v-if="loading" class="p-6 sm:p-8 text-center">
+        <div class="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="text-gray-500 mt-2 text-sm sm:text-base">Loading group info...</p>
       </div>
 
       <!-- Group Info Content -->
-      <div v-else-if="groupInfo" class="p-6 space-y-6">
+      <div v-else-if="groupInfo" class="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <!-- Group Description -->
         <div v-if="groupInfo.description || canManage">
-          <div class="flex items-center justify-between mb-3">
-            <h4 class="font-semibold text-gray-900">Description</h4>
-            <button 
+          <div class="flex items-center justify-between mb-2 sm:mb-3">
+            <h4 class="font-semibold text-gray-900 text-sm sm:text-base">Description</h4>
+            <button
               v-if="canManage && !editingDescription"
               @click="startEditDescription"
-              class="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              class="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium"
             >
               Edit
             </button>
           </div>
-          
+
           <!-- Description Display -->
           <div v-if="!editingDescription">
             <p v-if="groupInfo.description" class="text-gray-700">{{ groupInfo.description }}</p>
             <p v-else class="text-gray-500 italic">No description set</p>
           </div>
-          
+
           <!-- Description Edit -->
           <div v-else class="space-y-3">
             <textarea
@@ -163,7 +163,7 @@
           <div class="flex items-center justify-between mb-4">
             <h4 class="font-semibold text-gray-900">Add Member</h4>
           </div>
-          
+
           <!-- Search Users -->
           <div class="relative mb-3">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -190,13 +190,13 @@
               :disabled="addingMember"
               class="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
             >
-              <div 
+              <div
                 v-if="user.avatar"
                 class="w-8 h-8 rounded-full overflow-hidden"
               >
                 <img :src="user.avatar" :alt="user.name" class="w-full h-full object-cover" />
               </div>
-              <div 
+              <div
                 v-else
                 class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold"
               >
@@ -217,7 +217,7 @@
         <!-- Members List -->
         <div class="border-t pt-6">
           <h4 class="font-semibold text-gray-900 mb-4">Members ({{ groupInfo.members?.length || 0 }})</h4>
-          
+
           <div class="space-y-3">
             <div
               v-for="member in groupInfo.members"
@@ -227,33 +227,33 @@
               <div class="flex items-center space-x-3">
                 <!-- Avatar -->
                 <div class="relative">
-                  <div 
+                  <div
                     v-if="member.avatar"
                     class="w-10 h-10 rounded-full overflow-hidden"
                   >
                     <img :src="member.avatar" :alt="member.name" class="w-full h-full object-cover" />
                   </div>
-                  <div 
+                  <div
                     v-else
                     class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold"
                   >
                     {{ member.name.charAt(0).toUpperCase() }}
                   </div>
-                  
+
                   <!-- Online Status -->
                   <div
                     v-if="member.is_online"
                     class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"
                   ></div>
                 </div>
-                
+
                 <!-- Member Info -->
                 <div class="flex-1">
                   <div class="flex items-center space-x-2">
                     <p class="font-medium text-gray-900">{{ member.name }}</p>
-                    
+
                     <!-- Role Badge -->
-                    <span 
+                    <span
                       class="px-2 py-1 text-xs font-semibold rounded-full"
                       :class="{
                         'bg-yellow-100 text-yellow-800': member.role === 'admin',
@@ -263,9 +263,9 @@
                     >
                       {{ member.role === 'admin' ? '👑 Admin' : member.role === 'moderator' ? '🛡️ Moderator' : 'Member' }}
                     </span>
-                    
+
                     <!-- Creator Badge -->
-                    <span 
+                    <span
                       v-if="groupInfo.created_by === member.id"
                       class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"
                     >
@@ -291,7 +291,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z"></path>
                     </svg>
                   </button>
-                  
+
                   <!-- Actions Dropdown -->
                   <div
                     v-if="memberActionsOpen === member.id"
@@ -315,7 +315,7 @@
                         👑 Make Admin
                       </button>
                     </div>
-                    
+
                     <!-- Danger Zone -->
                     <div class="border-t border-gray-100 py-2">
                       <button
@@ -459,7 +459,7 @@ const canManage = computed(() => {
 const loadGroupInfo = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
     const response = await axios.get(`/api/groups/${props.groupId}/info`);
     if (response.data.success) {
@@ -490,10 +490,10 @@ const searchUsers = () => {
       const response = await axios.get('/api/user/search', {
         params: { query: userSearchQuery.value.trim() }
       });
-      
+
       // Filter out users who are already members
       const existingMemberIds = groupInfo.value?.members?.map(m => m.id) || [];
-      searchResults.value = response.data.filter(user => 
+      searchResults.value = response.data.filter(user =>
         !existingMemberIds.includes(user.id)
       );
     } catch (error) {
@@ -504,24 +504,24 @@ const searchUsers = () => {
 
 const addMemberToGroup = async (user) => {
   addingMember.value = true;
-  
+
   try {
     const response = await axios.post(`/api/groups/${props.groupId}/members`, {
       user_id: user.id,
       role: 'member'
     });
-    
+
     if (response.data.success) {
       // Add member to local state
       if (groupInfo.value.members) {
         groupInfo.value.members.push(response.data.member);
         groupInfo.value.members_count++;
       }
-      
+
       // Clear search
       userSearchQuery.value = '';
       searchResults.value = [];
-      
+
       emit('member-added', { group: groupInfo.value, member: response.data.member });
     }
   } catch (error) {
@@ -534,17 +534,17 @@ const addMemberToGroup = async (user) => {
 
 const removeMemberFromGroup = async (member) => {
   if (!confirm(`Remove ${member.name} from the group?`)) return;
-  
+
   try {
     const response = await axios.delete(`/api/groups/${props.groupId}/members/${member.id}`);
-    
+
     if (response.data.success) {
       // Remove member from local state
       if (groupInfo.value.members) {
         groupInfo.value.members = groupInfo.value.members.filter(m => m.id !== member.id);
         groupInfo.value.members_count--;
       }
-      
+
       memberActionsOpen.value = null;
       emit('member-removed', { group: groupInfo.value, member });
     }
@@ -559,14 +559,14 @@ const changeMemberRole = async (member, newRole) => {
     const response = await axios.put(`/api/groups/${props.groupId}/members/${member.id}/role`, {
       role: newRole
     });
-    
+
     if (response.data.success) {
       // Update member role in local state
       const memberIndex = groupInfo.value.members.findIndex(m => m.id === member.id);
       if (memberIndex !== -1) {
         groupInfo.value.members[memberIndex].role = newRole;
       }
-      
+
       memberActionsOpen.value = null;
     }
   } catch (error) {
@@ -592,12 +592,12 @@ const cancelEditDescription = () => {
 
 const saveDescription = async () => {
   savingDescription.value = true;
-  
+
   try {
     const response = await axios.put(`/api/groups/${props.groupId}/info`, {
       description: editDescriptionText.value.trim() || null
     });
-    
+
     if (response.data.success) {
       groupInfo.value.description = editDescriptionText.value.trim() || null;
       editingDescription.value = false;
@@ -624,14 +624,14 @@ const cancelEditName = () => {
 
 const saveName = async () => {
   if (!editNameText.value.trim()) return;
-  
+
   savingName.value = true;
-  
+
   try {
     const response = await axios.put(`/api/groups/${props.groupId}/info`, {
       name: editNameText.value.trim()
     });
-    
+
     if (response.data.success) {
       groupInfo.value.name = editNameText.value.trim();
       editingName.value = false;
@@ -696,13 +696,13 @@ const handleAvatarUpload = async (event) => {
   } catch (error) {
     console.error('Upload avatar error:', error);
     let errorMessage = 'Failed to upload avatar';
-    
+
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
+
     alert(errorMessage);
   } finally {
     uploadingAvatar.value = false;
@@ -718,7 +718,7 @@ const confirmDeleteGroup = () => {
 const deleteGroup = async () => {
   try {
     const response = await axios.delete(`/api/groups/${props.groupId}`);
-    
+
     if (response.data.success) {
       emit('group-deleted', groupInfo.value);
       emit('close');
@@ -738,7 +738,7 @@ const confirmLeaveGroup = () => {
 const leaveGroup = async () => {
   try {
     const response = await axios.post(`/api/groups/${props.groupId}/leave`);
-    
+
     if (response.data.success) {
       emit('left-group', groupInfo.value);
       emit('close');

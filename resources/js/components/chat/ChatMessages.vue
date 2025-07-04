@@ -1,34 +1,34 @@
 <template>
-  <div class="h-full overflow-y-auto bg-gray-50 p-4 space-y-4 scroll-smooth" ref="messagesContainer">
+  <div class="h-full overflow-y-auto bg-gray-50 p-2 sm:p-3 lg:p-4 space-y-2 sm:space-y-3 lg:space-y-4 scroll-smooth" ref="messagesContainer">
     <!-- Loading -->
-    <div v-if="loading" class="space-y-4">
+    <div v-if="loading" class="space-y-3 sm:space-y-4">
       <div v-for="i in 5" :key="i" class="animate-pulse">
-        <div class="flex items-start space-x-3">
-          <div class="w-8 h-8 bg-gray-200 rounded-full"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+        <div class="flex items-start space-x-2 sm:space-x-3">
+          <div class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded-full"></div>
+          <div class="flex-1 space-y-1 sm:space-y-2">
+            <div class="h-3 sm:h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- No Messages -->
-    <div v-else-if="messages.length === 0" class="flex-1 flex items-center justify-center">
+    <div v-else-if="messages.length === 0" class="flex-1 flex items-center justify-center px-4">
       <div class="text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
         </svg>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-        <p class="text-gray-600">Start the conversation by sending a message</p>
+        <h3 class="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">No messages yet</h3>
+        <p class="text-sm sm:text-base text-gray-600">Start the conversation by sending a message</p>
       </div>
     </div>
 
     <!-- Messages -->
-    <div v-else class="space-y-4">
+    <div v-else class="space-y-2 sm:space-y-3 lg:space-y-4">
       <!-- Date divider -->
       <div class="text-center">
-        <div class="inline-block bg-white px-3 py-1 rounded-lg text-sm text-gray-500 border border-gray-200">
+        <div class="inline-block bg-white px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm text-gray-500 border border-gray-200">
           {{ formatDateDivider(messages[0]?.created_at) }}
         </div>
       </div>
@@ -36,15 +36,15 @@
       <div
         v-for="message in messages"
         :key="message.id"
-        class="flex items-end space-x-2 group"
+        class="flex items-end space-x-1 sm:space-x-2 group"
         :class="{ 'flex-row-reverse space-x-reverse': currentUser && message.user && message.user.id === currentUser.id }"
       >
         <!-- System Message -->
         <div v-if="message.is_system" class="w-full">
-          <div class="flex justify-center my-4">
-            <div class="bg-gray-100 text-gray-600 px-4 py-2 rounded-full text-sm font-medium">
-              <div class="flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex justify-center my-2 sm:my-4">
+            <div class="bg-gray-100 text-gray-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium max-w-xs sm:max-w-sm">
+              <div class="flex items-center space-x-1 sm:space-x-2">
+                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <span>{{ message.content }}</span>
@@ -64,7 +64,7 @@
               <!-- User Avatar with Image -->
               <div
                 v-if="message.user && message.user.avatar"
-                class="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm"
+                class="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-white shadow-sm"
               >
                 <img
                   :src="message.user.avatar"
@@ -75,14 +75,14 @@
               <!-- Fallback Avatar with Initials -->
               <div
                 v-else-if="message.user"
-                class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                class="w-6 h-6 sm:w-8 sm:h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold"
               >
                 {{ message.user.name.charAt(0).toUpperCase() }}
               </div>
               <!-- System message fallback -->
               <div
                 v-else
-                class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                class="w-6 h-6 sm:w-8 sm:h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-semibold"
               >
                 S
               </div>
@@ -90,44 +90,44 @@
               <!-- Online Status Indicator (only for other users) -->
               <div
                 v-if="currentUser && message.user && message.user.id !== currentUser.id && message.user.is_online"
-                class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+                class="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 border-2 border-white rounded-full"
               ></div>
             </div>
           </div>
 
           <!-- Message Content -->
-          <div class="max-w-xs lg:max-w-md">
+          <div class="max-w-[250px] sm:max-w-xs lg:max-w-md xl:max-w-lg">
           <!-- Reply to message -->
-          <div v-if="message.reply_to_message" class="mb-2 p-2 bg-gray-100 rounded-lg border-l-4 border-blue-400">
+          <div v-if="message.reply_to_message" class="mb-1 sm:mb-2 p-1.5 sm:p-2 bg-gray-100 rounded-lg border-l-4 border-blue-400">
             <p class="text-xs text-blue-600 font-medium">{{ message.reply_to_message.user.name }}</p>
-            <p class="text-sm text-gray-700 truncate">{{ message.reply_to_message.content }}</p>
+            <p class="text-xs sm:text-sm text-gray-700 truncate">{{ message.reply_to_message.content }}</p>
           </div>
 
           <!-- Message bubble -->
           <div
-            class="message-bubble"
+            class="message-bubble px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-3 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md"
             :class="{
-              'sent': currentUser && message.user.id === currentUser.id && !message.is_deleted,
-              'received': (!currentUser || message.user.id !== currentUser.id) && !message.is_deleted,
-              'deleted': message.is_deleted
+              'sent bg-gradient-to-r from-primary-500 to-accent-500 text-white ml-auto': currentUser && message.user.id === currentUser.id && !message.is_deleted,
+              'received bg-white border border-secondary-200 text-secondary-800': (!currentUser || message.user.id !== currentUser.id) && !message.is_deleted,
+              'deleted bg-gray-100 text-gray-500': message.is_deleted
             }"
           >
             <!-- Deleted message -->
-            <div v-if="message.is_deleted" class="flex items-center space-x-2">
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div v-if="message.is_deleted" class="flex items-center space-x-1 sm:space-x-2">
+              <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
-              <span class="text-sm italic">This message was deleted</span>
+              <span class="text-xs sm:text-sm italic">This message was deleted</span>
             </div>
 
             <!-- Regular message content -->
             <div v-else>
               <!-- Regular message display -->
               <div>
-                <p v-if="message.content" class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+                <p v-if="message.content" class="text-xs sm:text-sm lg:text-base whitespace-pre-wrap break-words">{{ message.content }}</p>
 
                 <!-- File attachments -->
-                <div v-if="hasAttachments(message)" class="mt-3 space-y-3">
+                <div v-if="hasAttachments(message)" class="mt-2 sm:mt-3 space-y-2 sm:space-y-3">
                   <FilePreview
                     v-for="(file, index) in getAttachments(message)"
                     :key="index"
@@ -141,17 +141,17 @@
           </div>
 
           <!-- Message footer -->
-          <div class="flex items-center mt-1 space-x-2">
+          <div class="flex items-center mt-1 space-x-1 sm:space-x-2">
             <div class="flex items-center space-x-1">
               <span class="text-xs text-gray-500">{{ formatTime(message.created_at) }}</span>
               <span v-if="message.is_edited && !message.is_deleted" class="text-xs text-gray-400">(edited)</span>
             </div>
 
             <!-- Message actions (only for non-deleted messages) -->
-            <div v-if="currentUser && message.user.id === currentUser.id && !message.is_deleted" class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div v-if="currentUser && message.user.id === currentUser.id && !message.is_deleted" class="flex items-center space-x-0.5 sm:space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 @click="startEdit(message)"
-                class="p-1 text-gray-400 hover:text-gray-600 rounded"
+                class="p-0.5 sm:p-1 text-gray-400 hover:text-gray-600 rounded"
                 title="Edit message"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@
               </button>
               <button
                 @click="deleteMessage(message.id)"
-                class="p-1 text-red-400 hover:text-red-600 rounded"
+                class="p-0.5 sm:p-1 text-red-400 hover:text-red-600 rounded"
                 title="Delete message"
               >
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,9 +172,9 @@
             <!-- Reaction button for other users' messages (only for non-deleted messages) -->
             <button
               v-if="currentUser && message.user && message.user.id !== currentUser.id && !message.is_deleted"
-              class="p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              class="p-0.5 sm:p-1 rounded-full hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
             >
-              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </button>
@@ -269,24 +269,24 @@ const scrollToBottom = (force = false) => {
   nextTick(() => {
     if (messagesContainer.value) {
       const container = messagesContainer.value;
-      
+
       console.log('🔽 Scrolling to bottom:', {
         scrollHeight: container.scrollHeight,
         clientHeight: container.clientHeight,
         currentScrollTop: container.scrollTop,
         force: force
       });
-      
+
       // Force scroll to bottom
       container.scrollTop = container.scrollHeight;
-      
+
       // Double-check after a small delay (for images/content that might load)
       if (force) {
         setTimeout(() => {
           container.scrollTop = container.scrollHeight;
           console.log('🔽 Force scroll check 1:', container.scrollTop);
         }, 50);
-        
+
         // Triple-check for stubborn cases
         setTimeout(() => {
           container.scrollTop = container.scrollHeight;
