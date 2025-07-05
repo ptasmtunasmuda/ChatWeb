@@ -9,6 +9,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\Events\ChatRoomCreated;
+use App\Events\ChatRoomUpdated;
+use App\Events\ChatRoomDeleted;
 
 class AdminChatController extends Controller
 {
@@ -31,6 +34,15 @@ class AdminChatController extends Controller
         // Filter by type
         if ($request->has('type') && $request->type) {
             $query->where('type', $request->type);
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
         }
 
         // Filter by date range
@@ -64,6 +76,14 @@ class AdminChatController extends Controller
 
             return $chatRoom;
         });
+
+        // Log for debugging
+        \Log::info('Admin Chat Rooms API Response:', [
+            'total' => $chatRooms->total(),
+            'count' => $chatRooms->count(),
+            'current_page' => $chatRooms->currentPage(),
+            'per_page' => $chatRooms->perPage(),
+        ]);
 
         return response()->json($chatRooms);
     }
@@ -211,6 +231,7 @@ class AdminChatController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|nullable|string|max:1000',
             'type' => 'sometimes|required|in:private,group',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -220,7 +241,10 @@ class AdminChatController extends Controller
             ], 422);
         }
 
-        $chatRoom->update($request->only(['name', 'description', 'type']));
+        $chatRoom->update($request->only(['name', 'description', 'type', 'is_active']));
+
+        // Broadcast the update
+        broadcast(new ChatRoomUpdated($chatRoom))->toOthers();
 
         return response()->json([
             'message' => 'Chat room updated successfully',
@@ -231,7 +255,12 @@ class AdminChatController extends Controller
     public function deleteChatRoom($id)
     {
         $chatRoom = ChatRoom::findOrFail($id);
+        $chatRoomName = $chatRoom->name;
+        
         $chatRoom->delete();
+
+        // Broadcast the deletion
+        broadcast(new ChatRoomDeleted($id, $chatRoomName))->toOthers();
 
         return response()->json([
             'message' => 'Chat room deleted successfully'
@@ -342,6 +371,148 @@ class AdminChatController extends Controller
             'hourly_activity' => $hourlyActivity,
             'top_participants' => $topParticipants,
             'message_types' => $messageTypes
+        ]);
+    }
+
+    public function getAllMessages(Request $request)
+    {
+        $query = Message::with(['user:id,name', 'chatRoom:id,name']);
+
+        // Include deleted messages if requested
+        if ($request->boolean('include_deleted')) {
+            $query->withTrashed();
+        }
+
+        // Search in message content
+        if ($request->has('search') && $request->search) {
+            $query->where('content', 'like', "%{$request->search}%");
+        }
+
+        // Filter by message type
+        if ($request->has('type') && $request->type) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by user
+        if ($request->has('user_id') && $request->user_id) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Filter by chat room
+        if ($request->has('chat_room_id') && $request->chat_room_id) {
+            $query->where('chat_room_id', $request->chat_room_id);
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $perPage = $request->get('per_page', 50);
+        $messages = $query->latest()->paginate($perPage);
+
+        return response()->json($messages);
+    }
+
+    public function getDeletedMessages(Request $request)
+    {
+        $query = Message::onlyTrashed()->with(['user:id,name', 'chatRoom:id,name']);
+
+        // Search in message content
+        if ($request->has('search') && $request->search) {
+            $query->where('content', 'like', "%{$request->search}%");
+        }
+
+        // Filter by message type
+        if ($request->has('type') && $request->type) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by user
+        if ($request->has('user_id') && $request->user_id) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Filter by chat room
+        if ($request->has('chat_room_id') && $request->chat_room_id) {
+            $query->where('chat_room_id', $request->chat_room_id);
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('deleted_at', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('deleted_at', '<=', $request->date_to);
+        }
+
+        $perPage = $request->get('per_page', 50);
+        $messages = $query->latest('deleted_at')->paginate($perPage);
+
+        return response()->json($messages);
+    }
+
+    public function forceDeleteChatRoom($id)
+    {
+        $chatRoom = ChatRoom::withTrashed()->findOrFail($id);
+        $chatRoom->forceDelete();
+
+        return response()->json([
+            'message' => 'Chat room permanently deleted'
+        ]);
+    }
+
+    public function bulkAction(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'action' => 'required|in:activate,deactivate,delete,restore',
+            'room_ids' => 'required|array|min:1',
+            'room_ids.*' => 'integer|exists:chat_rooms,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $action = $request->action;
+        $roomIds = $request->room_ids;
+        $affectedCount = 0;
+
+        switch ($action) {
+            case 'activate':
+                $affectedCount = ChatRoom::whereIn('id', $roomIds)->update(['is_active' => true]);
+                break;
+            
+            case 'deactivate':
+                $affectedCount = ChatRoom::whereIn('id', $roomIds)->update(['is_active' => false]);
+                break;
+            
+            case 'delete':
+                $rooms = ChatRoom::whereIn('id', $roomIds)->get();
+                foreach ($rooms as $room) {
+                    $room->delete();
+                    // Broadcast deletion
+                    broadcast(new ChatRoomDeleted($room->id, $room->name))->toOthers();
+                }
+                $affectedCount = $rooms->count();
+                break;
+            
+            case 'restore':
+                $affectedCount = ChatRoom::onlyTrashed()->whereIn('id', $roomIds)->restore();
+                break;
+        }
+
+        return response()->json([
+            'message' => "Bulk {$action} completed successfully",
+            'affected_count' => $affectedCount
         ]);
     }
 }

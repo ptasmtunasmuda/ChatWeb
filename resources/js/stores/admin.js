@@ -209,18 +209,18 @@ export const useAdminStore = defineStore('admin', () => {
             const response = await axios.put(`/api/admin/users/${userId}/ip-whitelist`, {
                 allowed_ips: allowedIps
             });
-            
+
             // Update user in the users array
             const index = users.value.findIndex(user => user.id === userId);
             if (index !== -1) {
                 users.value[index].allowed_ips = response.data.allowed_ips;
             }
-            
+
             // Update current user if it's the same user
             if (currentUser.value?.user?.id === userId) {
                 currentUser.value.user.allowed_ips = response.data.allowed_ips;
             }
-            
+
             return { success: true, allowedIps: response.data.allowed_ips };
         } catch (error) {
             console.error('Error updating IP whitelist:', error);
@@ -231,18 +231,18 @@ export const useAdminStore = defineStore('admin', () => {
     const addIpToWhitelist = async (userId, ip) => {
         try {
             const response = await axios.post(`/api/admin/users/${userId}/ip-whitelist/add`, { ip });
-            
+
             // Update user in the users array
             const index = users.value.findIndex(user => user.id === userId);
             if (index !== -1) {
                 users.value[index].allowed_ips = response.data.allowed_ips;
             }
-            
+
             // Update current user if it's the same user
             if (currentUser.value?.user?.id === userId) {
                 currentUser.value.user.allowed_ips = response.data.allowed_ips;
             }
-            
+
             return { success: true, allowedIps: response.data.allowed_ips };
         } catch (error) {
             console.error('Error adding IP to whitelist:', error);
@@ -252,21 +252,21 @@ export const useAdminStore = defineStore('admin', () => {
 
     const removeIpFromWhitelist = async (userId, ip) => {
         try {
-            const response = await axios.delete(`/api/admin/users/${userId}/ip-whitelist/remove`, { 
-                data: { ip } 
+            const response = await axios.delete(`/api/admin/users/${userId}/ip-whitelist/remove`, {
+                data: { ip }
             });
-            
+
             // Update user in the users array
             const index = users.value.findIndex(user => user.id === userId);
             if (index !== -1) {
                 users.value[index].allowed_ips = response.data.allowed_ips;
             }
-            
+
             // Update current user if it's the same user
             if (currentUser.value?.user?.id === userId) {
                 currentUser.value.user.allowed_ips = response.data.allowed_ips;
             }
-            
+
             return { success: true, allowedIps: response.data.allowed_ips };
         } catch (error) {
             console.error('Error removing IP from whitelist:', error);
@@ -289,11 +289,27 @@ export const useAdminStore = defineStore('admin', () => {
     const fetchChatRooms = async (params = {}) => {
         chatRoomsLoading.value = true;
         try {
+            console.log('🔄 Admin Store: Fetching chat rooms with params:', params);
             const response = await axios.get('/api/admin/chat-rooms', { params });
-            chatRooms.value = response.data.data;
-            return { success: true, pagination: response.data };
+            console.log('📊 Admin Store: API response:', response.data);
+
+            // Handle both paginated and non-paginated responses
+            if (response.data.data) {
+                // Paginated response
+                chatRooms.value = response.data.data;
+                console.log('✅ Admin Store: Loaded', chatRooms.value.length, 'chat rooms (paginated)');
+                return { success: true, data: chatRooms.value, pagination: response.data };
+            } else if (Array.isArray(response.data)) {
+                // Direct array response
+                chatRooms.value = response.data;
+                console.log('✅ Admin Store: Loaded', chatRooms.value.length, 'chat rooms (direct)');
+                return { success: true, data: chatRooms.value };
+            } else {
+                console.error('❌ Admin Store: Unexpected response format:', response.data);
+                return { success: false, message: 'Unexpected response format' };
+            }
         } catch (error) {
-            console.error('Error fetching chat rooms:', error);
+            console.error('❌ Admin Store: Error fetching chat rooms:', error);
             return { success: false, message: error.response?.data?.message || 'Failed to fetch chat rooms' };
         } finally {
             chatRoomsLoading.value = false;
@@ -402,13 +418,28 @@ export const useAdminStore = defineStore('admin', () => {
         }
     };
 
-    const getChatRoomAnalytics = async (chatRoomId) => {
+    const fetchAllMessages = async (params = {}) => {
         try {
-            const response = await axios.get(`/api/admin/chat-rooms/${chatRoomId}/analytics`);
-            return { success: true, analytics: response.data };
+            console.log('🔄 Admin Store: Fetching all messages with params:', params);
+            const response = await axios.get('/api/admin/messages', { params });
+            console.log('📊 Admin Store: Messages API response:', response.data);
+
+            // Handle both paginated and non-paginated responses
+            if (response.data.data) {
+                // Paginated response
+                console.log('✅ Admin Store: Loaded', response.data.data.length, 'messages (paginated)');
+                return { success: true, data: response.data.data, pagination: response.data };
+            } else if (Array.isArray(response.data)) {
+                // Direct array response
+                console.log('✅ Admin Store: Loaded', response.data.length, 'messages (direct)');
+                return { success: true, data: response.data };
+            } else {
+                console.error('❌ Admin Store: Unexpected messages response format:', response.data);
+                return { success: false, message: 'Unexpected response format' };
+            }
         } catch (error) {
-            console.error('Error fetching chat room analytics:', error);
-            return { success: false, message: error.response?.data?.message || 'Failed to fetch analytics' };
+            console.error('❌ Admin Store: Error fetching messages:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to fetch messages' };
         }
     };
 
@@ -493,7 +524,8 @@ export const useAdminStore = defineStore('admin', () => {
         deleteRoom: deleteChatRoom, // Alias for AdminChats.vue
         restoreChatRoom,
         fetchChatMessages,
-        fetchMessages: fetchChatMessages, // Alias for AdminChats.vue
+        fetchMessages: fetchAllMessages, // Alias for AdminChats.vue - all messages
+        fetchAllMessages,
         deleteMessage,
         restoreMessage,
         bulkDeleteMessages,
@@ -513,7 +545,17 @@ export const useAdminStore = defineStore('admin', () => {
                 return { success: false, message: error.response?.data?.message || 'Failed to perform bulk action' };
             }
         },
-        getChatRoomAnalytics,
+
+        // Analytics
+        getChatRoomAnalytics: async (roomId) => {
+            try {
+                const response = await axios.get(`/api/admin/chat-rooms/${roomId}/analytics`);
+                return { success: true, data: response.data };
+            } catch (error) {
+                console.error('Error fetching chat room analytics:', error);
+                return { success: false, message: error.response?.data?.message || 'Failed to fetch analytics' };
+            }
+        },
 
         // Clear functions
         clearCurrentUser,

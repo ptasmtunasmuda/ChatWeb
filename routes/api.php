@@ -133,6 +133,7 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::put('chat-rooms/{id}', [App\Http\Controllers\Admin\AdminChatController::class, 'updateChatRoom']);
         Route::delete('chat-rooms/{id}', [App\Http\Controllers\Admin\AdminChatController::class, 'deleteChatRoom']);
         Route::post('chat-rooms/{id}/restore', [App\Http\Controllers\Admin\AdminChatController::class, 'restoreChatRoom']);
+        Route::post('chat-rooms/bulk-action', [App\Http\Controllers\Admin\AdminChatController::class, 'bulkAction']);
         Route::get('chat-rooms-deleted', [App\Http\Controllers\Admin\AdminChatController::class, 'getDeletedChatRooms']);
         Route::get('chat-rooms/{id}/analytics', [App\Http\Controllers\Admin\AdminChatController::class, 'getChatRoomAnalytics']);
 
