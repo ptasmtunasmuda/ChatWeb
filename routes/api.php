@@ -117,7 +117,7 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::delete('users/{id}/force', [App\Http\Controllers\Admin\AdminUserController::class, 'forceDelete']);
         Route::post('users/bulk-action', [App\Http\Controllers\Admin\AdminUserController::class, 'bulkAction']);
         Route::get('users-deleted', [App\Http\Controllers\Admin\AdminUserController::class, 'getDeletedUsers']);
-        
+
         // IP Whitelist management
         Route::put('users/{id}/ip-whitelist', [App\Http\Controllers\Admin\AdminUserController::class, 'updateIpWhitelist']);
         Route::post('users/{id}/ip-whitelist/add', [App\Http\Controllers\Admin\AdminUserController::class, 'addIpToWhitelist']);
@@ -136,6 +136,7 @@ Route::middleware(['auth:sanctum', 'ip.whitelist'])->group(function () {
         Route::post('chat-rooms/bulk-action', [App\Http\Controllers\Admin\AdminChatController::class, 'bulkAction']);
         Route::get('chat-rooms-deleted', [App\Http\Controllers\Admin\AdminChatController::class, 'getDeletedChatRooms']);
         Route::get('chat-rooms/{id}/analytics', [App\Http\Controllers\Admin\AdminChatController::class, 'getChatRoomAnalytics']);
+        Route::get('chat-activity-stats', [App\Http\Controllers\Admin\AdminChatController::class, 'getChatActivityStats']);
 
         // Message management
         Route::get('chat-rooms/{id}/messages', [App\Http\Controllers\Admin\AdminChatController::class, 'getMessages']);

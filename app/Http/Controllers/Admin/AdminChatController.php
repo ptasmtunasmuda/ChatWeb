@@ -256,7 +256,7 @@ class AdminChatController extends Controller
     {
         $chatRoom = ChatRoom::findOrFail($id);
         $chatRoomName = $chatRoom->name;
-        
+
         $chatRoom->delete();
 
         // Broadcast the deletion
@@ -490,11 +490,11 @@ class AdminChatController extends Controller
             case 'activate':
                 $affectedCount = ChatRoom::whereIn('id', $roomIds)->update(['is_active' => true]);
                 break;
-            
+
             case 'deactivate':
                 $affectedCount = ChatRoom::whereIn('id', $roomIds)->update(['is_active' => false]);
                 break;
-            
+
             case 'delete':
                 $rooms = ChatRoom::whereIn('id', $roomIds)->get();
                 foreach ($rooms as $room) {
@@ -504,7 +504,7 @@ class AdminChatController extends Controller
                 }
                 $affectedCount = $rooms->count();
                 break;
-            
+
             case 'restore':
                 $affectedCount = ChatRoom::onlyTrashed()->whereIn('id', $roomIds)->restore();
                 break;
@@ -514,5 +514,64 @@ class AdminChatController extends Controller
             'message' => "Bulk {$action} completed successfully",
             'affected_count' => $affectedCount
         ]);
+    }
+
+    public function getChatActivityStats(Request $request)
+    {
+        try {
+            // Get last 30 days of message activity
+            $endDate = Carbon::now();
+            $startDate = Carbon::now()->subDays(29);
+
+            $dailyActivity = [];
+
+            // Generate data for each day in the last 30 days
+            for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+                $messageCount = Message::whereDate('created_at', $date->format('Y-m-d'))
+                    ->whereNull('deleted_at')
+                    ->count();
+
+                $dailyActivity[] = [
+                    'date' => $date->format('Y-m-d'),
+                    'message_count' => $messageCount,
+                    'formatted_date' => $date->format('M j')
+                ];
+            }
+
+            // Additional stats
+            $totalMessages = Message::whereNull('deleted_at')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $totalRooms = ChatRoom::whereNull('deleted_at')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+
+            $activeUsers = User::whereHas('messages', function($query) use ($startDate, $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            })->count();
+
+            return response()->json([
+                'daily_activity' => $dailyActivity,
+                'summary' => [
+                    'total_messages' => $totalMessages,
+                    'total_rooms' => $totalRooms,
+                    'active_users' => $activeUsers,
+                    'period' => [
+                        'start_date' => $startDate->format('Y-m-d'),
+                        'end_date' => $endDate->format('Y-m-d'),
+                        'days' => 30
+                    ]
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching chat activity stats: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Failed to fetch chat activity stats',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

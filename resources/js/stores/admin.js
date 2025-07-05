@@ -557,6 +557,16 @@ export const useAdminStore = defineStore('admin', () => {
             }
         },
 
+        getChatActivityStats: async () => {
+            try {
+                const response = await axios.get('/api/admin/chat-activity-stats');
+                return { success: true, data: response.data };
+            } catch (error) {
+                console.error('Error fetching chat activity stats:', error);
+                return { success: false, message: error.response?.data?.message || 'Failed to fetch chat activity stats' };
+            }
+        },
+
         // Clear functions
         clearCurrentUser,
         clearCurrentChatRoom,
