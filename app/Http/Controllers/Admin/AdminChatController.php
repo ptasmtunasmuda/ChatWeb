@@ -376,11 +376,20 @@ class AdminChatController extends Controller
 
     public function getAllMessages(Request $request)
     {
+        \Log::info('getAllMessages called with params:', $request->all());
+
         $query = Message::with(['user:id,name', 'chatRoom:id,name']);
 
-        // Include deleted messages if requested
-        if ($request->boolean('include_deleted')) {
-            $query->withTrashed();
+        // Show only deleted messages if requested
+        if ($request->boolean('show_deleted_only')) {
+            \Log::info('Filtering for deleted messages only');
+            $query->onlyTrashed();
+        } else {
+            \Log::info('Showing active messages');
+            // Include deleted messages if requested (for backward compatibility)
+            if ($request->boolean('include_deleted')) {
+                $query->withTrashed();
+            }
         }
 
         // Search in message content

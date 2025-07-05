@@ -401,6 +401,16 @@ export const useAdminStore = defineStore('admin', () => {
         }
     };
 
+    const forceDeleteMessage = async (chatRoomId, messageId) => {
+        try {
+            await axios.delete(`/api/admin/chat-rooms/${chatRoomId}/messages/${messageId}/force`);
+            return { success: true };
+        } catch (error) {
+            console.error('Error force deleting message:', error);
+            return { success: false, message: error.response?.data?.message || 'Failed to permanently delete message' };
+        }
+    };
+
     const bulkDeleteMessages = async (chatRoomId, messageIds, permanent = false) => {
         try {
             const response = await axios.post(`/api/admin/chat-rooms/${chatRoomId}/messages/bulk-delete`, {
@@ -528,6 +538,7 @@ export const useAdminStore = defineStore('admin', () => {
         fetchAllMessages,
         deleteMessage,
         restoreMessage,
+        forceDeleteMessage,
         bulkDeleteMessages,
         bulkRoomAction: async (action, roomIds) => {
             try {

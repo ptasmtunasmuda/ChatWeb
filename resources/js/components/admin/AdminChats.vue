@@ -88,6 +88,20 @@
             </div>
           </div>
         </div>
+
+        <div class="card">
+          <div class="flex items-center">
+            <div class="p-3 rounded-full bg-red-100 mr-4">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm text-secondary-600">Deleted Messages</p>
+              <p class="text-2xl font-bold text-red-600">{{ stats.deleted_messages || 0 }}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Tabs -->
@@ -373,6 +387,17 @@
                 type="date"
                 class="px-4 py-2 border border-secondary-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
+
+              <!-- Show Only Deleted Messages Toggle -->
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input
+                  v-model="messageFilters.show_deleted_only"
+                  @change="fetchMessages"
+                  type="checkbox"
+                  class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <span class="text-sm text-gray-700">Show deleted messages only</span>
+              </label>
             </div>
 
             <!-- Bulk Actions -->
@@ -456,7 +481,15 @@
                 </tr>
 
                 <!-- Data Rows -->
-                <tr v-else v-for="message in messages" :key="message.id" class="hover:bg-secondary-50">
+                <tr
+                  v-else
+                  v-for="message in messages"
+                  :key="message.id"
+                  :class="[
+                    'hover:bg-secondary-50',
+                    message.deleted_at ? 'bg-red-50 border-l-4 border-red-400' : ''
+                  ]"
+                >
                   <td class="px-6 py-4">
                     <input
                       type="checkbox"
@@ -466,11 +499,23 @@
                     />
                   </td>
                   <td class="px-6 py-4">
-                    <div class="text-sm text-secondary-900">
+                    <div :class="[
+                      'text-sm',
+                      message.deleted_at ? 'text-red-600 line-through' : 'text-secondary-900'
+                    ]">
                       {{ message.content || 'No content' }}
                     </div>
                     <div class="text-xs text-secondary-500" v-if="message.is_system">
                       System message
+                    </div>
+                    <!-- Deleted message indicator -->
+                    <div v-if="message.deleted_at" class="flex items-center mt-1">
+                      <svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                      <span class="text-xs text-red-600 font-medium">
+                        Deleted on {{ formatDate(message.deleted_at) }}
+                      </span>
                     </div>
                   </td>
                   <td class="px-6 py-4">
@@ -493,9 +538,15 @@
                     </div>
                   </td>
                   <td class="px-6 py-4">
-                    <span :class="getMessageTypeBadgeClass(message.type)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
-                      {{ message.type }}
-                    </span>
+                    <div class="flex flex-col space-y-1">
+                      <span :class="getMessageTypeBadgeClass(message.type)" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                        {{ message.type }}
+                      </span>
+                      <!-- Status badge for deleted messages -->
+                      <span v-if="message.deleted_at" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        DELETED
+                      </span>
+                    </div>
                   </td>
                   <td class="px-6 py-4 text-sm text-secondary-500">
                     {{ formatDate(message.created_at) }}
@@ -507,12 +558,36 @@
                     >
                       View
                     </button>
-                    <button
-                      @click="deleteMessage(message)"
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+
+                    <!-- Show different actions based on deleted status -->
+                    <template v-if="message.deleted_at">
+                      <!-- Restore button for deleted messages -->
+                      <button
+                        @click="restoreMessage(message)"
+                        class="text-green-600 hover:text-green-900"
+                        title="Restore message"
+                      >
+                        Restore
+                      </button>
+                      <!-- Force delete button for deleted messages -->
+                      <button
+                        @click="forceDeleteMessage(message)"
+                        class="text-red-800 hover:text-red-900"
+                        title="Permanently delete message"
+                      >
+                        Force Delete
+                      </button>
+                    </template>
+
+                    <!-- Regular delete for active messages -->
+                    <template v-else>
+                      <button
+                        @click="deleteMessage(message)"
+                        class="text-red-600 hover:text-red-900"
+                      >
+                        Delete
+                      </button>
+                    </template>
                   </td>
                 </tr>
               </tbody>
@@ -708,7 +783,8 @@ const messageFilters = reactive({
   room_id: '',
   user_id: '',
   date_from: '',
-  date_to: ''
+  date_to: '',
+  show_deleted_only: false
 });
 
 // Stats
@@ -716,7 +792,8 @@ const stats = ref({
   total_rooms: 0,
   total_messages: 0,
   active_users: 0,
-  today_messages: 0
+  today_messages: 0,
+  deleted_messages: 0
 });
 
 // Chart
@@ -754,7 +831,7 @@ const fetchRooms = async () => {
         rooms.value = [];
         console.log('⚠️ No data in response');
       }
-      updateStats();
+      await updateStats();
     } else {
       rooms.value = [];
       console.error('❌ API Error:', response.message);
@@ -776,22 +853,23 @@ const fetchMessages = async () => {
 
     // Convert reactive object to plain object for API call
     const params = {
-      search: messageFilters.search || '',
-      room_id: messageFilters.room_id || '',
-      user_id: messageFilters.user_id || '',
-      date_from: messageFilters.date_from || '',
-      date_to: messageFilters.date_to || '',
       per_page: 50
     };
 
-    // Remove empty params
-    Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) {
-        delete params[key];
-      }
-    });
+    // Add non-empty string params
+    if (messageFilters.search) params.search = messageFilters.search;
+    if (messageFilters.room_id) params.room_id = messageFilters.room_id;
+    if (messageFilters.user_id) params.user_id = messageFilters.user_id;
+    if (messageFilters.date_from) params.date_from = messageFilters.date_from;
+    if (messageFilters.date_to) params.date_to = messageFilters.date_to;
+
+    // Always include boolean parameter
+    if (messageFilters.show_deleted_only) {
+      params.show_deleted_only = true;
+    }
 
     console.log('📤 Cleaned params:', params);
+    console.log('🔍 Show deleted only:', messageFilters.show_deleted_only);
 
     const response = await adminStore.fetchMessages(params);
     console.log('📊 Messages API Response:', response);
@@ -808,6 +886,9 @@ const fetchMessages = async () => {
         messages.value = [];
         console.log('⚠️ No messages data in response');
       }
+
+      // Update stats after loading messages
+      await updateStats();
     } else {
       messages.value = [];
       console.error('❌ Messages API Error:', response.message);
@@ -822,9 +903,9 @@ const fetchMessages = async () => {
   }
 };
 
-const debouncedSearchMessages = debounce(() => {
+const debouncedSearchMessages = debounce(async () => {
   console.log('🔍 Debounced search triggered');
-  fetchMessages();
+  await fetchMessages();
 }, 300);
 
 const toggleSelectAllMessages = () => {
@@ -857,12 +938,47 @@ const deleteMessage = async (message) => {
       const result = await adminStore.deleteMessage(message.chat_room_id, message.id);
       if (result.success) {
         notificationStore.success('Success', 'Message deleted successfully');
-        fetchMessages();
+        await fetchMessages();
+        await updateStats(); // Refresh deleted count
       } else {
         notificationStore.error('Error', result.message);
       }
     } catch (error) {
       notificationStore.error('Error', 'Failed to delete message');
+    }
+  }
+};
+
+const restoreMessage = async (message) => {
+  if (confirm(`Are you sure you want to restore this message?`)) {
+    try {
+      const result = await adminStore.restoreMessage(message.chat_room_id, message.id);
+      if (result.success) {
+        notificationStore.success('Success', 'Message restored successfully');
+        await fetchMessages();
+        await updateStats(); // Refresh deleted count
+      } else {
+        notificationStore.error('Error', result.message);
+      }
+    } catch (error) {
+      notificationStore.error('Error', 'Failed to restore message');
+    }
+  }
+};
+
+const forceDeleteMessage = async (message) => {
+  if (confirm(`Are you sure you want to PERMANENTLY delete this message? This action cannot be undone!`)) {
+    try {
+      const result = await adminStore.forceDeleteMessage(message.chat_room_id, message.id);
+      if (result.success) {
+        notificationStore.success('Success', 'Message permanently deleted');
+        await fetchMessages();
+        await updateStats(); // Refresh deleted count
+      } else {
+        notificationStore.error('Error', result.message);
+      }
+    } catch (error) {
+      notificationStore.error('Error', 'Failed to permanently delete message');
     }
   }
 };
@@ -895,7 +1011,8 @@ const bulkDeleteMessages = async (permanent = false) => {
 
       notificationStore.success('Success', `${totalDeleted} message(s) ${action}d successfully`);
       selectedMessages.value = [];
-      fetchMessages();
+      await fetchMessages();
+      await updateStats(); // Refresh deleted count
     } catch (error) {
       notificationStore.error('Error', `Failed to ${action} messages`);
     }
@@ -909,18 +1026,43 @@ const getPrivateVsGroupRatio = () => {
   return `${privateCount} private / ${groupCount} group`;
 };
 
-const updateStats = () => {
+const updateStats = async () => {
   const roomsArray = Array.isArray(rooms.value) ? rooms.value : [];
   console.log('📊 Updating stats for', roomsArray.length, 'rooms');
+
+  // Get deleted messages count from API
+  let deletedCount = 0;
+  try {
+    const deletedResponse = await adminStore.fetchMessages({ show_deleted_only: true, per_page: 1 });
+    if (deletedResponse.success && deletedResponse.pagination) {
+      deletedCount = deletedResponse.pagination.total || 0;
+    }
+  } catch (error) {
+    console.error('Error fetching deleted messages count:', error);
+  }
 
   stats.value = {
     total_rooms: roomsArray.length,
     total_messages: roomsArray.reduce((sum, room) => sum + (room.messages_count || 0), 0),
     active_users: roomsArray.reduce((sum, room) => sum + (room.participants_count || 0), 0),
-    today_messages: roomsArray.reduce((sum, room) => sum + (room.messages_today || 0), 0)
+    today_messages: roomsArray.reduce((sum, room) => sum + (room.messages_today || 0), 0),
+    deleted_messages: deletedCount
   };
 
   console.log('📈 Updated stats:', stats.value);
+};
+
+// Non-async version for real-time events
+const updateStatsSync = () => {
+  const roomsArray = Array.isArray(rooms.value) ? rooms.value : [];
+
+  stats.value = {
+    total_rooms: roomsArray.length,
+    total_messages: roomsArray.reduce((sum, room) => sum + (room.messages_count || 0), 0),
+    active_users: roomsArray.reduce((sum, room) => sum + (room.participants_count || 0), 0),
+    today_messages: roomsArray.reduce((sum, room) => sum + (room.messages_today || 0), 0),
+    deleted_messages: stats.value.deleted_messages // Keep existing count
+  };
 };
 
 // Chart functions
@@ -1252,7 +1394,7 @@ const setupRealTimeListeners = () => {
         // Add new room to the list
         if (e.chatRoom && rooms.value) {
           rooms.value.unshift(e.chatRoom);
-          updateStats();
+          updateStatsSync();
           notificationStore.info('New Chat Room', `${e.chatRoom.name} has been created`);
         }
       })
@@ -1263,7 +1405,7 @@ const setupRealTimeListeners = () => {
           const index = rooms.value.findIndex(room => room.id === e.chatRoom.id);
           if (index !== -1) {
             rooms.value[index] = e.chatRoom;
-            updateStats();
+            updateStatsSync();
           }
         }
       })
@@ -1272,7 +1414,7 @@ const setupRealTimeListeners = () => {
         // Remove room from the list
         if (e.chatRoomId && rooms.value) {
           rooms.value = rooms.value.filter(room => room.id !== e.chatRoomId);
-          updateStats();
+          updateStatsSync();
           notificationStore.info('Chat Room Deleted', 'A chat room has been deleted');
         }
       })
@@ -1290,7 +1432,7 @@ const setupRealTimeListeners = () => {
           if (room) {
             room.messages_count = (room.messages_count || 0) + 1;
             room.updated_at = e.message.created_at;
-            updateStats();
+            updateStatsSync();
           }
         }
       })
@@ -1323,7 +1465,7 @@ onMounted(async () => {
 
   // Fetch messages when switching to messages tab
   if (activeTab.value === 'messages') {
-    fetchMessages();
+    await fetchMessages();
   }
 
   setupRealTimeListeners();
@@ -1340,7 +1482,7 @@ onMounted(async () => {
 watch(activeTab, async (newTab) => {
   console.log('📋 Tab changed to:', newTab);
   if (newTab === 'messages' && messages.value.length === 0) {
-    fetchMessages();
+    await fetchMessages();
   }
 
   // Create chart when switching to reports tab
